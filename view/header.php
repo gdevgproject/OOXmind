@@ -521,12 +521,12 @@ $randomImage = $images[array_rand($images)];
                 <section class="level-up">
                     <div>
                         <p class="level"><?php echo $userLevels; ?></p>
-                        <p class="levelPercent"><?php echo $levelPercent; ?>%</p>
+                        <p class="levelPercent text-shadow"><?php echo $levelPercent; ?>%</p>
                     </div>
                 </section>
                 <section class="wrap-name">
                     <p class="user-name">Vu Duc Minh</p>
-                    <p class="premium">Premium</p>
+                    <p class="premium text-shadow">Premium</p>
                 </section>
             </section>
             <section class="humburgerBtn">
@@ -537,7 +537,7 @@ $randomImage = $images[array_rand($images)];
         <a href="./index.php" class="profile">
             <img src="./assets/minh.jpg" alt="user image">
         </a>
-        <ul class="avt-list">
+        <ul class="avt-list text-shadow">
             <li style="background-color: #e57373; padding: 1px 6px; border-radius: 6px;">
                 <?php echo number_format($folderSizeGB, 3); ?> GB
             </li>
