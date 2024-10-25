@@ -1,0 +1,51 @@
+* {
+  font-family: "ABC Ginto Nord Unlicensed Trial", sans-serif;
+  font-family: "ABC Ginto Nord Condensed Unlicensed Trial", sans-serif;
+  font-family: "ABC Ginto Normal Unlicensed Trial", sans-serif;
+}
+
+/* Thiết lập các thuộc tính chung cho body */
+body {
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+/* Thiết lập các thuộc tính cho header */
+header {
+  text-align: center;
+  /* Căn giữa nội dung trong header */
+}
+
+/* Thiết lập các thuộc tính cho header */
+.bar-header-wrapper {
+  width: 100%;
+  /* Đảm bảo header chiếm toàn bộ chiều rộng */
+  background-color: rgba(255, 255, 255, 0.1);
+  /* Màu trắng nhưng trong suốt  (sử dụng rgba để chỉ định alpha) */
+  border-radius: 7px;
+  /* Làm mờ nền sau header để tạo hiệu ứng trong suốt */
+  padding: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Thiết lập các thuộc tính cho phần trung tâm của nav */
+.bar-center-content ul {
+  list-style-type: none;
+  /* Loại bỏ các dấu chấm trước danh sách */
+  margin: 0;
+  /* Loại bỏ margin mặc định của danh sách */
+  padding: 0;
+  /* Loại bỏ padding mặc định của danh sách */
+  display: flex;
+  /* Khoảng cách giữa các phần tử con */
+}
+
+li {
+  flex: 1;
+}

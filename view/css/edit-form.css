@@ -1,0 +1,146 @@
+/* Styles cho modal */
+.modal-dialog {
+  max-width: 90%;
+}
+
+.modal-content {
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  backdrop-filter: blur(15px);
+}
+
+/* Form layout styles */
+.container-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.left-form,
+.right-form {
+  flex: 1;
+  min-width: 300px;
+}
+
+.upload-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Input styles */
+.soft-input {
+  border: 1px solid rgba(209, 207, 226, 0.7);
+  background-color: rgba(243, 240, 255, 0.9);
+  border-radius: 8px;
+  padding: 10px;
+  transition: background-color 0.3s ease;
+  color: #4a4a4a;
+  font-weight: bold;
+}
+
+.soft-input:focus {
+  background-color: rgba(235, 230, 255, 0.9);
+  outline: none;
+}
+
+/* Button styles */
+.btn-save,
+.btn-close,
+.custom-file-upload {
+  padding: 10px 20px;
+  border-radius: 8px;
+  color: #333;
+  transition: background-color 0.3s ease;
+}
+
+.save-close {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+}
+
+.btn-save {
+  background-color: rgba(163, 196, 243, 0.9);
+  border: none;
+}
+
+.btn-save:hover {
+  background-color: rgba(111, 159, 231, 0.9);
+}
+
+.btn-close {
+  background-color: rgba(255, 179, 179, 0.9);
+  border: none;
+}
+
+.btn-close:hover {
+  background-color: rgba(255, 128, 128, 0.9);
+}
+
+/* Label styles */
+label {
+  font-weight: bold;
+  color: #333;
+}
+
+/* Custom file upload button styles */
+.custom-file-upload {
+  display: inline-block;
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: rgba(163, 196, 243, 0.9);
+  border-radius: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.custom-file-upload:hover {
+  background-color: rgba(111, 159, 231, 0.9);
+}
+
+/* Hide default file input */
+input[type="file"] {
+  display: none;
+}
+
+/* Upload preview styles */
+.upload-preview {
+  position: relative;
+  border: 2px solid rgba(209, 207, 226, 0.7);
+  background-color: rgba(243, 240, 255, 0.9);
+  border-radius: 8px;
+  padding: 10px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Preview element styles */
+.preview-box {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: none;
+  /* Ẩn mặc định, sẽ hiển thị khi có tệp tải lên */
+  animation: fadeIn 0.5s ease;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

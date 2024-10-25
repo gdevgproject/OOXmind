@@ -1,0 +1,45 @@
+/* Định dạng scroll bar dọc và ngang */
+::-webkit-scrollbar {
+    width: 8px;
+    /* Chiều rộng của thanh scroll dọc */
+    height: 8px;
+    /* Chiều cao của thanh scroll ngang */
+}
+
+/* Định dạng nút cuộn dọc */
+::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Màu nền của nút cuộn dọc */
+    border-radius: 6px;
+    /* Độ cong của mép */
+}
+
+/* Định dạng thanh cuộn dọc */
+::-webkit-scrollbar-track {
+    background: transparent;
+    /* Màu nền của thanh cuộn dọc */
+}
+
+/* Định dạng mức độ trong suốt của scroll bar dọc khi không hover */
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Màu nền của nút cuộn dọc khi hover */
+}
+
+/* Định dạng nút cuộn ngang */
+::-webkit-scrollbar-thumb:horizontal {
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Màu nền của nút cuộn ngang */
+}
+
+/* Định dạng thanh cuộn ngang */
+::-webkit-scrollbar-track:horizontal {
+    background: transparent;
+    /* Màu nền của thanh cuộn ngang */
+}
+
+/* Định dạng mức độ trong suốt của scroll bar ngang khi không hover */
+::-webkit-scrollbar-thumb:horizontal:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Màu nền của nút cuộn ngang khi hover */
+}

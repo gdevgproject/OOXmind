@@ -1,0 +1,200 @@
+.top-bar {
+  position: absolute;
+  left: 0;
+  cursor: pointer;
+  margin-left: 6px;
+  margin-top: 6px;
+}
+
+.top-bar img {
+  width: 40px;
+  display: block;
+}
+
+.wrap-level-up {
+  width: auto;
+  padding: 2px 10px 2px 2px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 10px;
+  border-radius: 10px;
+
+  height: 84px;
+  box-shadow: rgba(100, 181, 246, 0.4) -5px 5px,
+    rgba(100, 181, 246, 0.3) -10px 10px, rgba(100, 181, 246, 0.2) -15px 15px,
+    rgba(100, 181, 246, 0.1) -20px 20px, rgba(100, 181, 246, 0.05) -25px 25px;
+}
+
+.wrap-level-up:hover {
+  transform: scale(1.1);
+}
+
+.level-up {
+  background: linear-gradient(135deg, #64b5f6, #ba68c8);
+  z-index: 3;
+  border-radius: 10px;
+  display: flex;
+  width: 80px;
+  height: 80px;
+  align-items: center;
+  justify-content: center; /* Centers content both vertically and horizontally */
+  text-align: center;
+}
+
+.level {
+  font-family: "Cursive", sans-serif;
+  font-size: 28px;
+  color: #37474f; /* Soft Charcoal */
+  font-weight: bold;
+  margin: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+}
+
+.levelPercent {
+  font-family: "Cursive", sans-serif;
+  font-size: 13px;
+  color: #fff; /* Soft Blue Gray */
+  margin: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+}
+
+.wrap-name {
+  margin-left: 10px;
+  color: #37474f;
+  text-align: left;
+}
+
+.user-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.premium {
+  margin: 0;
+}
+
+.profile {
+  position: absolute;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  top: 15px;
+  right: 10px;
+}
+
+.profile img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #ffb74d; /* Soft Orange */
+  transition: transform 0.3s ease;
+}
+
+.profile:hover img {
+  transform: scale(1.2);
+  border-color: #ba68c8; /* Soft Violet */
+}
+
+.avt-list li {
+  color: #ffffff; /* White text for contrast */
+  box-shadow: rgba(0, 0, 0, 0.2) 1px 1px 5px; /* Subtle shadow for depth */
+}
+
+.humburgerBtn {
+  /* position: fixed; */
+  /* bottom: 0;
+  left: 22px;
+  top: 120px; */
+  cursor: pointer;
+  z-index: 2;
+  margin-top: 20px;
+  margin-left: 10px;
+}
+
+.humburgerBtn img {
+  /* width: 40px; */
+  transition: transform 0.1s ease-in-out; /* Thêm thuộc tính transition */
+}
+
+.humburgerBtn:hover img {
+  transform: scale(1.2); /* Phóng to khi hover */
+}
+
+.humburgerBtn:active img {
+  transform: scale(0.9); /* Thu nhỏ khi click */
+}
+
+.highlighted {
+  background-color: #f0f0f0;
+}
+
+.afteHumburgerBtn {
+  display: none;
+  max-width: 300px;
+  position: fixed;
+  top: 170px;
+  left: 15px;
+  z-index: 1;
+  box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px,
+    rgba(6, 24, 44, 0.65) 0px 4px 6px -1px,
+    rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+  border-radius: 10px;
+  padding: 10px;
+  backdrop-filter: blur(10px);
+  max-height: 650px;
+  /* overflow: scroll; */
+}
+
+.afteHumburgerBtn.show {
+  display: block;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  margin-top: 10px;
+}
+
+.afteHumburgerBtn ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.afteHumburgerBtn li a {
+  text-decoration: none;
+  display: block;
+  display: flex;
+  padding: 10px;
+}
+
+.afteHumburgerBtn li a img {
+  padding: 5px;
+  margin-right: 5px;
+}
+.avt-list {
+  position: absolute;
+  top: 17px;
+  right: 55px;
+  list-style: none;
+  font-weight: 550;
+  font-size: large;
+}
+
+.avt-list li {
+  color: #ffffff; /* White text for contrast */
+  box-shadow: rgba(0, 0, 0, 0.2) 1px 1px 5px; /* Subtle shadow for depth */
+}
+
+#onlineTimeCounter {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  color: #ffffff;
+
+  z-index: 3;
+}
+
+.text-shadow {
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000,
+    1px 1px 0 #000;
+}

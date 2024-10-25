@@ -1,0 +1,14 @@
+.color-full-line {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #e57373,
+    #ffb74d,
+    #fff176,
+    #64b5f6,
+    #ba68c8
+  );
+  border-radius: 4px;
+  flex-grow: 1;
+  margin-left: 6px;
+}

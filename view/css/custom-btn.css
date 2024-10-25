@@ -1,0 +1,71 @@
+/* CSS cho nút button */
+.custom-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: border-radius 0.3s, background 0.3s, backdrop-filter 0.3s,
+    outline 0.3s, box-shadow 0.3s;
+}
+
+.custom-btn:hover {
+  border-radius: 10px;
+  background: transparent;
+  backdrop-filter: blur(10px);
+  outline: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px #ffdd40, 0 0 60px #ae63e4, 0 0 90px #0ebeff;
+}
+/* CSS cho ảnh trong nút button */
+.custom-btn img {
+  width: 40px;
+  height: 40px;
+  transition: transform 0.3s;
+}
+
+.custom-btn:hover img {
+  transform: scale(1.2);
+}
+
+/* CSS cho phần chữ mô tả trong nút button */
+.custom-btn p {
+  text-align: center;
+  margin: 0;
+  margin-top: 5px;
+  color: black;
+  /* Thay đổi màu chữ nếu cần */
+}
+
+.custom-btn:hover p {
+  background: linear-gradient(
+    90deg,
+    #47cf73,
+    #ffdd40,
+    #ae63e4,
+    #0ebeff,
+    #47cf73
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent; /* Đây là cách để làm cho màu văn bản trong suốt và hiển thị gradient */
+}
+
+.custom-btn-2 {
+  border-radius: 40px;
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  color: black;
+  width: 35%;
+  font-size: 30px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: border-radius 0.3s, background 0.3s, backdrop-filter 0.3s,
+    outline 0.3s, box-shadow 0.3s;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.custom-btn-2:hover {
+  background: transparent;
+  backdrop-filter: blur(20px);
+  outline: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0);
+}

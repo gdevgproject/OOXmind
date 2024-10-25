@@ -1,0 +1,25 @@
+.custom-table {
+    padding: 20px 30px;
+    background: transparent;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, .2);
+    box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+    border: 1px solid black;
+}
+
+table.custom-table th {
+    text-align: center;
+    font-size: 1.2em; /* Đặt kích thước chữ to hơn */
+    padding: 10px;
+}
+
+table.custom-table th,
+table.custom-table td {
+    border: 1px solid #fff;
+    border: 1px solid black;
+}
+
+table.custom-table td {
+    padding: 5px;
+    font-size: 18px;
+}
