@@ -12,16 +12,13 @@ $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
 $stmt->execute();
 $contentData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Kiểm tra nếu không có từ vựng nào cần ôn tập
+
 if (empty($contentData)) {
-    // Chuyển hướng người dùng đến trang home.php
     header('Location: home.php');
-    exit; // Đảm bảo không có mã nào khác được thực thi sau khi chuyển hướng
+    exit;
 }
 
 $totalVocabulary = count($contentData);
-
-
 ?>
 
 

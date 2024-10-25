@@ -1,49 +1,5 @@
 <?php
 include 'view/header.php';
-
-// Hàm xác định màu sắc dựa trên giá trị $count
-function getColorBasedOnCount($count, $isTodayCount = false) {
-    if ($isTodayCount) {
-        if ($count < 10) {
-            return '#e57373'; // Đỏ nhạt
-        } elseif ($count < 20) {
-            return '#ffb74d'; // Cam nhạt
-        } elseif ($count < 30) {
-            return '#fff176'; // Vàng nhạt
-        } elseif ($count < 40) {
-            return '#81c784'; // Xanh lá nhạt
-        } else {
-            return '#ba68c8'; // Tím nhạt
-        }
-    } else {
-        if ($count > 40) {
-            return '#e57373'; // Đỏ nhạt
-        } elseif ($count > 30) {
-            return '#ffb74d'; // Cam nhạt
-        } elseif ($count > 20) {
-            return '#fff176'; // Vàng nhạt
-        } elseif ($count > 10) {
-            return '#81c784'; // Xanh lá nhạt
-        } else {
-            return '#4d4d4d'; // Màu đen mặc định
-        }
-    }
-}
-
-
-// Hàm lấy số lượng từ vựng hôm nay
-function getTodayVocabCount($conn)
-{
-    $today = date('Y-m-d');
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM content WHERE DATE(create_time) = :today");
-    $stmt->execute(['today' => $today]);
-    return $stmt->fetchColumn();
-}
-
-// Lấy số lượng từ vựng và xác định màu sắc
-$todayVocabCount = getTodayVocabCount($conn);
-$vocabColor = getColorBasedOnCount($todayVocabCount, true);
-$reviewColor = getColorBasedOnCount($count);
 ?>
 
 <style>
@@ -118,17 +74,17 @@ $reviewColor = getColorBasedOnCount($count);
         <div class="row justify-content-center">
             <div class="col-md-6 text-md-left">
                 <div class="mt-3 custom-div-2 d-flex align-items-center justify-content-center">
-                    <h2 class='mb-0 ms-2'
-                        style="border: 1px solid black; padding: 7px 10px; border-radius: 10px; font-weight: 600;">
-                        <a href="./index.php" class="notebook-link">
-                            <img src="assets/notebook.png" alt="notebook" width="40px" class="me-2 notebook-img">
-                        </a>
-                        <span style="color: <?= $vocabColor; ?>;" class="text-shadow"><?= $vocabCount; ?></span>
-                        vocabs
-                        <span style="color: <?= $vocabColor; ?>;" class="text-shadow"><?= $otherCount; ?></span>
-                        questions <span style="color: <?= $vocabColor; ?>;"
-                            class="text-shadow"><?php echo $totalVocabCount; ?></span>
-                    </h2>
+                <h2 class='mb-0 ms-2'
+                    style="border: 1px solid #607d8b; padding: 7px 10px; border-radius: 10px; font-weight: 600;">
+                    <a href="./index.php" class="notebook-link">
+                        <img src="assets/notebook.png" alt="notebook" width="40px" class="me-2 notebook-img">
+                    </a>
+                    <span style="color: #4FC3F7;" class="text-shadow"><?php echo $totalVocabCount; ?>.</span>
+                    <span style="color: #81c784;" class="text-shadow"><?= $vocabCount; ?></span>
+                    <span style="color: #FFB74D;" class="text-shadow">vocabs</span>
+                    <span style="color: #64B5F6;" class="text-shadow"><?= $otherCount; ?></span>
+                    <span style="color: #BA68C8;" class="text-shadow">questions</span>
+                </h2>
                     <a type="button" data-toggle="modal" data-target="#addNewModal" class="ml-3 add-link"
                         style="border: 1px solid black; border-radius: 50%; padding: 9px;">
                         <img src="assets/add.png" alt="" width="35px" class="add-img">

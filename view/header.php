@@ -1,6 +1,5 @@
 <?php
 require_once 'model/pdo.php';
-
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 $currentDateTime = date("Y-m-d H:i:s");
 
@@ -155,6 +154,51 @@ function getVocabCreatedCountToday($conn) {
     return $stmt->fetchColumn();
 }
 
+// Hàm xác định màu sắc dựa trên giá trị $count
+function getColorBasedOnCount($count, $isTodayCount = false) {
+    if ($isTodayCount) {
+        if ($count < 10) {
+            return '#e57373'; // Đỏ nhạt
+        } elseif ($count < 20) {
+            return '#ffb74d'; // Cam nhạt
+        } elseif ($count < 30) {
+            return '#fff176'; // Vàng nhạt
+        } elseif ($count < 40) {
+            return '#81c784'; // Xanh lá nhạt
+        } else {
+            return '#ba68c8'; // Tím nhạt
+        }
+    } else {
+        if ($count > 40) {
+            return '#e57373'; // Đỏ nhạt
+        } elseif ($count > 30) {
+            return '#ffb74d'; // Cam nhạt
+        } elseif ($count > 20) {
+            return '#fff176'; // Vàng nhạt
+        } elseif ($count > 10) {
+            return '#81c784'; // Xanh lá nhạt
+        } else {
+            return '#4d4d4d'; // Màu đen mặc định
+        }
+    }
+}
+// Hàm lấy số lượng từ vựng hôm nay
+function getTodayVocabCount($conn)
+{
+    $today = date('Y-m-d');
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM content WHERE DATE(create_time) = :today");
+    $stmt->execute(['today' => $today]);
+    return $stmt->fetchColumn();
+}
+
+// Lấy tổng từ đã ôn tập hôm nay
+function getTodayReviewedVocabCount($conn)
+{
+    $today = date('Y-m-d');
+    $stmt = $conn->prepare("SELECT SUM(vocab_reviewed_count) FROM activity_log WHERE DATE(activity_date) = :today");
+    $stmt->execute(['today' => $today]);
+    return $stmt->fetchColumn();
+}
 
 
 // Call the function to initialize activity log and get total_time_spent
@@ -246,6 +290,13 @@ $vocabCreatedCountToday = getVocabCreatedCountToday($conn);
 $imageFolder = "assets/picture_background/";
 $images = [];
 $files = scandir($imageFolder);
+
+// Lấy số lượng từ vựng và xác định màu sắc
+$todayVocabCount = getTodayVocabCount($conn);
+$todayVocabReviewed = getTodayReviewedVocabCount($conn);
+$vocabColor = getColorBasedOnCount($todayVocabCount, true);
+$reviewedColor = getColorBasedOnCount($todayVocabReviewed, true);
+$reviewColor = getColorBasedOnCount($count);
 
 foreach ($files as $file) {
     $extension = pathinfo($file, PATHINFO_EXTENSION);
@@ -490,10 +541,10 @@ $randomImage = $images[array_rand($images)];
             <li style="background-color: #e57373; padding: 1px 6px; border-radius: 6px;">
                 <?php echo number_format($folderSizeGB, 3); ?> GB
             </li>
-            <li style="background-color: #ffb74d; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
+            <li style="background-color: <?= $vocabColor; ?>; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
                 created <?php echo $vocabCreatedCountToday; ?>
             </li>
-            <li style="background-color: #81c784; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
+            <li style="background-color: <?= $reviewedColor; ?>; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
                 reviewed <?php echo $vocabReviewedCount; ?>
             </li>
         </ul>
