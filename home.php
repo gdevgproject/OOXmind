@@ -1,5 +1,19 @@
 <?php
 include 'view/header.php';
+$colors = [
+    '#e57373', // Đỏ nhạt
+    '#ff8a65', // Cam đậm nhạt
+    '#ffb74d', // Cam nhạt
+    '#ffd54f', // Vàng đậm
+    '#fff176', // Vàng nhạt
+    '#aed581', // Xanh lục đậm
+    '#81c784', // Xanh lục nhạt
+    '#4dd0e1', // Xanh ngọc nhạt
+    '#64b5f6', // Xanh dương nhạt
+    '#ce93d8',  // Tím nhạt
+    '#ba68c8' // Tím đậm nhạt
+];
+$colorIndex = 6;
 ?>
 
 <style>
@@ -107,7 +121,7 @@ include 'view/header.php';
                 <div>
                     <?php foreach ($upcomingWords as $word): ?>
                         <div class="custom-div d-flex align-items-center mb-1 text-shadow" style="color: #f5f5f5;">
-                            <div class="text-center" style="padding: 7px 10px; border-radius: 15px; background-color: #2f4f4f;;">
+                            <div class="text-center" style="padding: 7px 10px; border-radius: 15px; background-color: <?= $colors[$colorIndex]; ?>">
                                 <div>
                                     <img src="assets/notification-bell.png" alt="đồng hồ cát" width="22px">
                                 </div>
@@ -117,7 +131,7 @@ include 'view/header.php';
                                 </div>
                             </div>
 
-                            <div class="text-justify text-shadow-white" style="padding-left: 20px; color: #2f4f4f;">
+                            <div class="text-justify text-shadow" style="padding-left: 20px; color: <?= $colors[$colorIndex]; ?>">
                                 <strong>
                                     <?= mb_strlen($word['vocab']) > 100 ? mb_substr($word['vocab'], 0, 100) . ' ...' : $word['vocab'] ?>
                                 </strong>
@@ -126,6 +140,7 @@ include 'view/header.php';
                                 </strong>
                             </div>
                         </div>
+                        <?php $colorIndex = ($colorIndex + 1) % count($colors); ?>
                     <?php endforeach; ?>
                 </div>
             </div>

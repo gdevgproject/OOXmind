@@ -154,34 +154,32 @@ function getVocabCreatedCountToday($conn) {
     return $stmt->fetchColumn();
 }
 
-// Hàm xác định màu sắc dựa trên giá trị $count
 function getColorBasedOnCount($count, $isTodayCount = false) {
-    if ($isTodayCount) {
         if ($count < 10) {
             return '#e57373'; // Đỏ nhạt
         } elseif ($count < 20) {
-            return '#ffb74d'; // Cam nhạt
+            return '#ff8a65'; // Cam đậm nhạt
         } elseif ($count < 30) {
-            return '#fff176'; // Vàng nhạt
+            return '#ffb74d'; // Cam nhạt
         } elseif ($count < 40) {
-            return '#81c784'; // Xanh lá nhạt
+            return '#ffd54f'; // Vàng đậm
+        } elseif ($count < 50) {
+            return '#fff176'; // Vàng nhạt
+        } elseif ($count < 60) {
+            return '#aed581'; // Xanh lục đậm
+        } elseif ($count < 70) {
+            return '#81c784'; // Xanh lục nhạt
+        } elseif ($count < 80) {
+            return '#4dd0e1'; // Xanh ngọc nhạt
+        } elseif ($count < 90) {
+            return '#64b5f6'; // Xanh dương nhạt
+        } elseif ($count < 100) {
+            return '#ce93d8'; // Tím đậm nhạt 
         } else {
             return '#ba68c8'; // Tím nhạt
         }
-    } else {
-        if ($count > 40) {
-            return '#e57373'; // Đỏ nhạt
-        } elseif ($count > 30) {
-            return '#ffb74d'; // Cam nhạt
-        } elseif ($count > 20) {
-            return '#fff176'; // Vàng nhạt
-        } elseif ($count > 10) {
-            return '#81c784'; // Xanh lá nhạt
-        } else {
-            return '#4d4d4d'; // Màu đen mặc định
-        }
-    }
 }
+
 // Hàm lấy số lượng từ vựng hôm nay
 function getTodayVocabCount($conn)
 {
