@@ -100,30 +100,24 @@ include 'view/header.php';
                 <?php if ($count > 0): ?>
                     <div class="text-center" style="margin: 35px 0;">
                         <div class="text-center">
-                            <a href="practice.php" class="custom-big-btn" style="background-color: <?= $reviewColor; ?>; color: #FFFFFF; text-shadow:
-        -1px -1px 0 #000,  
-         1px -1px 0 #000,
-         -1px 1px 0 #000,
-          1px 1px 0 #000;">REVIEW NOW</a>
+                            <a href="practice.php" class="custom-big-btn text-shadow" style="background-color: <?= $reviewColor; ?>; color: #FFFFFF;">REVIEW NOW</a>
                         </div>
                     </div>
                 <?php endif; ?>
                 <div>
                     <?php foreach ($upcomingWords as $word): ?>
-                        <div class="custom-div d-flex justify-content-between align-items-center mb-1">
-                            <!-- Thay đổi ở đây để các mục căn trái -->
-                            <div class="text-center">
+                        <div class="custom-div d-flex align-items-center mb-1 text-shadow" style="color: #f5f5f5;">
+                            <div class="text-center" style="padding: 7px 10px; border-radius: 15px; background-color: #2f4f4f;;">
                                 <div>
-                                    <img src="assets/notification-bell.png" alt="đồng hồ cát" width="30px">
+                                    <img src="assets/notification-bell.png" alt="đồng hồ cát" width="22px">
                                 </div>
                                 <div>
-                                    <strong class="custom-btn countdown" data-next-review="<?= $word['next_review'] ?>"
+                                    <strong class="countdown" data-next-review="<?= $word['next_review'] ?>"
                                         data-last-review="<?= $word['last_review'] ?>"></strong>
-
                                 </div>
                             </div>
 
-                            <div class="text-justify" style="padding-left: 36px;">
+                            <div class="text-justify text-shadow-white" style="padding-left: 20px; color: #2f4f4f;">
                                 <strong>
                                     <?= mb_strlen($word['vocab']) > 100 ? mb_substr($word['vocab'], 0, 100) . ' ...' : $word['vocab'] ?>
                                 </strong>
@@ -435,68 +429,68 @@ include 'view/header.php';
 
         const data = <?php echo $jsonData; ?>;
 
-// Sắp xếp lại dữ liệu từ cấp độ cao nhất đến thấp nhất
-data.sort((a, b) => a.level - b.level);
+        // Sắp xếp lại dữ liệu từ cấp độ cao nhất đến thấp nhất
+        data.sort((a, b) => a.level - b.level);
 
-// Xử lý dữ liệu, lấy ra số lượng từ vựng cho mỗi cấp độ
-const vocabCountByLevel = data.map(item => item.vocab_count);
+        // Xử lý dữ liệu, lấy ra số lượng từ vựng cho mỗi cấp độ
+        const vocabCountByLevel = data.map(item => item.vocab_count);
 
-// Mảng màu sắc tương ứng với từng cấp độ
-const colors = ['#e57373', '#ffb74d', '#fff176', '#81c784', '#4dd0e1', '#64b5f6', '#ba68c8'];
+        // Mảng màu sắc tương ứng với từng cấp độ
+        const colors = ['#e57373', '#ffb74d', '#fff176', '#81c784', '#4dd0e1', '#64b5f6', '#ba68c8'];
 
 
 
-// Tính tổng số lượng từ vựng của 7 cấp độ cao nhất
-const totalVocabCount = vocabCountByLevel.reduce((a, b) => a + b, 0);
+        // Tính tổng số lượng từ vựng của 7 cấp độ cao nhất
+        const totalVocabCount = vocabCountByLevel.reduce((a, b) => a + b, 0);
 
-// Tính chiều cao tương ứng với tỷ lệ phần trăm số lượng từ vựng của từng cấp độ
-const heights = vocabCountByLevel.map(count => Math.min((count / totalVocabCount) * 100, 100));
+        // Tính chiều cao tương ứng với tỷ lệ phần trăm số lượng từ vựng của từng cấp độ
+        const heights = vocabCountByLevel.map(count => Math.min((count / totalVocabCount) * 100, 100));
 
-// Kích thước của biểu đồ
-const width = 700;
-const height = 230;
-const columnWidth = Math.min(100, (width - 15 * (vocabCountByLevel.length - 1)) / vocabCountByLevel.length);
-const gap = 12;
+        // Kích thước của biểu đồ
+        const width = 700;
+        const height = 230;
+        const columnWidth = Math.min(100, (width - 15 * (vocabCountByLevel.length - 1)) / vocabCountByLevel.length);
+        const gap = 12;
 
-// Tạo đối tượng SVG
-const svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height);
+        // Tạo đối tượng SVG
+        const svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height);
 
-// Tạo biểu đồ cột
-svg.selectAll("rect")
-    .data(heights)
-    .enter().append("rect")
-    .attr("x", (_, i) => i * (columnWidth + gap))
-    .attr("y", d => height - (d / 100) * height)
-    .attr("width", columnWidth)
-    .attr("height", d => (d / 100) * height)
-    .attr("fill", (_, i) => colors[i])
-    .attr("rx", 10)
-    .attr("ry", 10);
+        // Tạo biểu đồ cột
+        svg.selectAll("rect")
+            .data(heights)
+            .enter().append("rect")
+            .attr("x", (_, i) => i * (columnWidth + gap))
+            .attr("y", d => height - (d / 100) * height)
+            .attr("width", columnWidth)
+            .attr("height", d => (d / 100) * height)
+            .attr("fill", (_, i) => colors[i])
+            .attr("rx", 10)
+            .attr("ry", 10);
 
-// Thêm nhãn văn bản lên trên đỉnh mỗi cột
-svg.selectAll("text")
-    .data(vocabCountByLevel)
-    .enter().append("text")
-    .attr("x", (_, i) => i * (columnWidth + gap) + columnWidth / 2)
-    .attr("y", d => height - (d / totalVocabCount) * height - 20)
-    .attr("text-anchor", "middle")
-    .attr("dy", "0.75em")
-    .html(d => `<tspan font-weight='bold'>${d} words</tspan>`);
+        // Thêm nhãn văn bản lên trên đỉnh mỗi cột với màu sắc và hiệu ứng text-shadow
+        svg.selectAll("text")
+            .data(vocabCountByLevel)
+            .enter().append("text")
+            .attr("x", (_, i) => i * (columnWidth + gap) + columnWidth / 2)
+            .attr("y", d => height - (d / totalVocabCount) * height - 20)
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.75em")
+            .attr("fill", (_, i) => colors[i]) // Màu chữ của từng cấp độ
+            .attr("class", "text-shadow") // Gán class nếu đã có sẵn
+            .html(d => `<tspan font-weight='bold'>${d} words</tspan>`)
+            .style("text-shadow", "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000");
 
-// Thêm đường trục x
-svg.selectAll("line")
-    .data(heights)
-    .enter().append("line")
-    .attr("x1", (_, i) => i * (columnWidth + gap))
-    .attr("y1", height)
-    .attr("x2", (_, i) => i * (columnWidth + gap) + columnWidth)
-    .attr("y2", height)
-    .attr("stroke", "#bdbdbd")
-    .attr("stroke-width", 7);
+        // Thêm đường trục x
+        svg.selectAll("line")
+            .data(heights)
+            .enter().append("line")
+            .attr("x1", (_, i) => i * (columnWidth + gap))
+            .attr("y1", height)
+            .attr("x2", (_, i) => i * (columnWidth + gap) + columnWidth)
+            .attr("y2", height)
+            .attr("stroke", "#bdbdbd")
+            .attr("stroke-width", 7);
 
     </script>
-
-
     </body>
-
     </html>
