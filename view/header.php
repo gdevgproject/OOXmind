@@ -334,21 +334,44 @@ $randomImage = $images[array_rand($images)];
     <link rel="stylesheet" href="./sql/bootstrap.min.css">
 
     <style>
-        #myImage {
-            transition: opacity 0.6s ease-in-out;
-            width: 100%;
-            height: 100vh;
-            object-fit: cover;
-            object-position: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: -1;
-        }
+#myImage {
+    width: 100%;
+    height: 100vh;
+    object-fit: cover;
+    object-position: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+    animation: animateImage 40s infinite alternate;
+    will-change: transform; /* Optimize performance */
+}
 
-        #myImage.transitioning {
-            opacity: 0.2;
-        }
+#myImage.transitioning {
+    opacity: 0.2;
+}
+
+@keyframes animateImage {
+    0% {
+        transform: scale(1) translate(0, 0);
+    }
+    25% {
+        transform: scale(1.05) translate(10px, -10px);
+    }
+    50% {
+        transform: scale(1.1) translate(-10px, 10px) rotate(2deg);
+    }
+    75% {
+        transform: scale(1.05) translate(10px, 10px);
+    }
+    100% {
+        transform: scale(1) translate(0, 0) rotate(0deg);
+    }
+}
+
+
+
 
         /* Progress Level Bar */
 
@@ -463,28 +486,35 @@ $randomImage = $images[array_rand($images)];
     <script src="./sql/jquery-3.5.1.slim.min.js"></script>
     <script src="./sql/bootstrap.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var images = <?php echo json_encode($images); ?>;
-            var imageElement = document.getElementById('myImage');
-            var currentImageIndex = 0;
+document.addEventListener('DOMContentLoaded', function () {
+    var images = <?php echo json_encode($images); ?>;
+    var imageElement = document.getElementById('myImage');
+    var currentImageIndex = 0;
 
-            function changeImageWithTransition() {
-                var newImage = images[currentImageIndex];
-                imageElement.classList.add('transitioning');
-
-                setTimeout(function () {
-                    imageElement.src = newImage;
-                    imageElement.classList.remove('transitioning');
-                    currentImageIndex++;
-
-                    if (currentImageIndex >= images.length) {
-                        currentImageIndex = 0;
-                    }
-                }, 700);
+    function changeImageWithTransition() {
+        var newImage = images[currentImageIndex];
+        imageElement.classList.add('transitioning');
+        setTimeout(function () {
+            imageElement.src = newImage;
+            imageElement.classList.remove('transitioning');
+            currentImageIndex++;
+            if (currentImageIndex >= images.length) {
+                currentImageIndex = 0;
             }
+        }, 700);
+    }
 
-            setInterval(changeImageWithTransition, 10000);
-        });
+    setInterval(changeImageWithTransition, 10000);
+});
+
+window.addEventListener('scroll', function () {
+    var scrolled = window.pageYOffset;
+    var image = document.getElementById('myImage');
+    var rate = scrolled * -0.2; // Giảm tốc độ để tránh cảm giác chóng mặt
+    image.style.transform = 'translateY(' + rate + 'px)';
+});
+
+
     </script>
 </head>
 

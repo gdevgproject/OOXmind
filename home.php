@@ -93,7 +93,7 @@ $colorIndex = 6;
                     <a href="./index.php" class="notebook-link">
                         <img src="assets/notebook.png" alt="notebook" width="40px" class="me-2 notebook-img">
                     </a>
-                    <span style="color: #4FC3F7;" class="text-shadow"><?php echo $totalVocabCount; ?>.</span>
+                    <span style="color: #4FC3F7;" class="text-shadow"><?php echo $totalVocabCount; ?> .</span>
                     <span style="color: #81c784;" class="text-shadow"><?= $vocabCount; ?></span>
                     <span style="color: #FFB74D;" class="text-shadow">vocabs</span>
                     <span style="color: #64B5F6;" class="text-shadow"><?= $otherCount; ?></span>
@@ -104,8 +104,6 @@ $colorIndex = 6;
                         <img src="assets/add.png" alt="" width="35px" class="add-img">
                     </a>
                 </div>
-
-
 
                 <div id="chart" class="my-3 custom-div"></div>
                 <div>
@@ -120,7 +118,7 @@ $colorIndex = 6;
                 <?php endif; ?>
                 <div>
                     <?php foreach ($upcomingWords as $word): ?>
-                        <div class="custom-div d-flex align-items-center mb-1 text-shadow" style="color: #f5f5f5;">
+                        <div class="custom-div d-flex align-items-center mb-1 text-shadow" style="color: #fff176;">
                             <div class="text-center" style="padding: 7px 10px; border-radius: 15px; background-color: <?= $colors[$colorIndex]; ?>">
                                 <div>
                                     <img src="assets/notification-bell.png" alt="đồng hồ cát" width="22px">
@@ -130,7 +128,6 @@ $colorIndex = 6;
                                         data-last-review="<?= $word['last_review'] ?>"></strong>
                                 </div>
                             </div>
-
                             <div class="text-justify text-shadow" style="padding-left: 20px; color: <?= $colors[$colorIndex]; ?>">
                                 <strong>
                                     <?= mb_strlen($word['vocab']) > 100 ? mb_substr($word['vocab'], 0, 100) . ' ...' : $word['vocab'] ?>
