@@ -203,6 +203,7 @@
 }
 
 .text-shadow-white {
+  color: #2c3e50;
   text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
     1px 1px 0 #fff;
 }

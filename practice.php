@@ -220,31 +220,32 @@ $totalVocabulary = count($contentData);
     }
 </style>
 <div class="mt-5">
-    <div class="row justify-content-center pseudo-class-level">
+    <div class="row justify-content-center pseudo-class-level text-shadow-white">
         <div class="col-md-8">
             <span id="levelBadge" class="level-badge"></span>
-            <button id="editThisVocab" class="edit-this-vocab" onclick="editCurrentVocab()">Edit</button>
+            <button id="editThisVocab" class="edit-this-vocab text-shadow-white" onclick="editCurrentVocab()">Edit</button>
             <div class="custom-div text-center">
                 <h3 class="my-3 text-justify" id="definition"></h3>
                 <div class="input-group">
-                    <input type="text" class="input-box" id="vocabularyInput" placeholder="Vocabulary"
+                    <input type="text" class="input-box text-shadow-white" id="vocabularyInput" placeholder="Vocabulary"
                         autocomplete="off">
                 </div>
                 <div class="input-group mt-3">
-                    <input type="text" class="input-box" id="partOfSpeechInput" placeholder="Part of Speech"
+                    <input type="text" class="input-box text-shadow-white" id="partOfSpeechInput" placeholder="Part of Speech"
                         autocomplete="off">
                 </div>
                 <h3 class="my-3 text-justify" id="question"></h3>
                 <div class="input-group">
-                    <input type="text" class="input-box" id="answerInput" placeholder="Answer" autocomplete="off">
+                    <input type="text" class="input-box text-shadow-white" id="answerInput" placeholder="Answer" autocomplete="off">
                 </div>
                 <div class="text-center mt-5">
-                    <button type="button" class="custom-big-btn" onclick="checkAnswer()">CHECK</button>
+                    <button type="button" class="custom-big-btn text-shadow-white" onclick="checkAnswer()">CHECK</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- checked -->
 <div class="modal" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
