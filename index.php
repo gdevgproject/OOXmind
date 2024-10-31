@@ -184,10 +184,10 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
     }
 </style>
 
-<div class="mx-auto list-vocab-table" style="width:90%">
+<div class="mx-auto list-vocab-table text-shadow-white" style="width:90%">
     <!-- Search Bar -->
     <div class="input-group my-3">
-        <input type="text" class="input-box" id="searchInput" placeholder="Search..." aria-label="Search"
+        <input type="text" class="input-box text-shadow-white" id="searchInput" placeholder="Search..." aria-label="Search"
             aria-describedby="basic-addon2">
     </div>
 

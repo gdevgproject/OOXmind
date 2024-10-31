@@ -2,16 +2,17 @@
   border-radius: 15px;
   padding: 15px 25px;
   background: transparent;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
   border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  /* filter: brightness(0.8); */
 }
 
 .custom-div-2 {
   border-radius: 15px;
   padding: 10px 20px;
   background: transparent;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
   border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
