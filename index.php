@@ -347,10 +347,10 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
         </button>";
                 if ($row['accepted'] == 1) {
                     // Nếu đã chấp nhận, hiển thị nút "Accept Again" 
-                    echo "<button class='custom-btn' onclick='acceptToDraft({$row['content_id']})'><img src='assets/again.png' alt='accept again'></button>";
+                    echo "<button class='custom-btn' onclick='acceptToDraft({$row['content_id']}, $page)'><img src='assets/again.png' alt='accept again'></button>";
                 } else {
                     // Nếu chưa chấp nhận, hiển thị nút "Accept"
-                    echo "<button class='custom-btn' onclick='acceptToDraft({$row['content_id']})'><img src='assets/accept.png' alt='accept'></button>";
+                    echo "<button class='custom-btn' onclick='acceptToDraft({$row['content_id']}, $page)'><img src='assets/accept.png' alt='accept'></button>";
                 }
                 echo "</td>";
 
@@ -805,9 +805,9 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
         window.location.href = `practice_draft.php?def=${encodeURIComponent(def)}&vocab=${encodeURIComponent(vocab)}`;
     }
 
-    function acceptToDraft(contentId) {
+    function acceptToDraft(contentId, page) {
         if (confirm("Are you sure you want to copy this content to draft?")) {
-            window.location.href = `process_accept_draft_content.php?id=${contentId}`;
+            window.location.href = `process_accept_draft_content.php?id=${contentId}&page=${page}`;
         }
     }
 

@@ -17,7 +17,7 @@ function copyAndRenameFile($oldFilePath, $folder)
     return copy($oldFilePath, $newFilePath) ? $newFilePath : ""; // Sao chép và trả về đường dẫn mới hoặc rỗng
 }
 
-function processDraftContent($draftId)
+function processDraftContent($draftId, $page)
 {
     $conn = pdo_get_connection(); // Kết nối CSDL
     $row = fetchDraftContent($conn, $draftId); // Lấy nội dung nháp
@@ -30,7 +30,8 @@ function processDraftContent($draftId)
     insertContent($conn, $row, $newImagePath, $newVideoPath, $newAudioPath); // Chèn nội dung
     updateDraftContentStatus($conn, $draftId); // Cập nhật trạng thái nháp
 
-    redirect('home.php');
+    header("Location: draft_content.php?page=$page");
+    exit();
 }
 
 function fetchDraftContent($conn, $draftId)
@@ -76,12 +77,9 @@ function updateDraftContentStatus($conn, $draftId)
     $stmt->execute();
 }
 
-function redirect($location)
-{
-    echo "<script>window.location.href = '$location';</script>";
-}
-
-
-if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"])) {
-    processDraftContent($_GET["id"]); // Xử lý nội dung nếu có tham số GET
+if (isset($_GET['id']) && isset($_GET['page'])) {
+    processDraftContent($_GET['id'], $_GET['page']);
+} else {
+    header("Location: draft_content.php");
+    exit();
 }

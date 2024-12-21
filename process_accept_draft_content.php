@@ -15,7 +15,6 @@ function copyAndRenameFile($oldFilePath, $folder) {
 }
 
 function insertDraftContent($conn, $row, $newImagePath, $newVideoPath, $newAudioPath) {
-    // Sử dụng cùng logic mapping fields
     $fields = [
         'vocab', 'part_of_speech', 'ipa', 'def', 'ex', 'question', 'answer',  
         'level', 'correct_count', 'incorrect_count', 'create_time',
@@ -26,11 +25,10 @@ function insertDraftContent($conn, $row, $newImagePath, $newVideoPath, $newAudio
         return $row[$field] ?? null;  
     }, $fields);
 
-    // Thêm media paths và trạng thái accepted
     $values[] = $newImagePath;
     $values[] = $newVideoPath;
     $values[] = $newAudioPath;
-    $values[] = 0; // accepted status
+    $values[] = 0;
 
     $sql = "INSERT INTO draft_content (" .
            implode(', ', $fields) .
@@ -41,11 +39,10 @@ function insertDraftContent($conn, $row, $newImagePath, $newVideoPath, $newAudio
     $stmt->execute($values);
 }
 
-function processContentToDraft($contentId) {
+function processContentToDraft($contentId, $page) {
     try {
         $conn = pdo_get_connection();
         
-        // Fetch content data with all fields
         $stmt = $conn->prepare("SELECT * FROM content WHERE content_id = ?"); 
         $stmt->execute([$contentId]);
         $content = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -54,30 +51,27 @@ function processContentToDraft($contentId) {
             throw new Exception("Content not found");
         }
 
-        // Copy files with new names
         $newImagePath = copyAndRenameFile($content['image_path'], 'image');
         $newVideoPath = copyAndRenameFile($content['video_path'], 'video');
         $newAudioPath = copyAndRenameFile($content['audio_path'], 'audio');
 
-        // Insert into draft_content including all fields
         insertDraftContent($conn, $content, $newImagePath, $newVideoPath, $newAudioPath);
 
-        // Update content status
         $stmt = $conn->prepare("UPDATE content SET accepted = 1 WHERE content_id = ?");
         $stmt->execute([$contentId]);
 
-        header("Location: index.php");
+        header("Location: index.php?page=$page");
         exit();
 
     } catch (Exception $e) {
         error_log("Error in processContentToDraft: " . $e->getMessage()); 
-        header("Location: index.php?error=1");
+        header("Location: index.php?error=1&page=$page");
         exit();
     }
 }
 
-if (isset($_GET['id'])) {
-    processContentToDraft($_GET['id']);
+if (isset($_GET['id']) && isset($_GET['page'])) {
+    processContentToDraft($_GET['id'], $_GET['page']);
 } else {
     header("Location: index.php");
     exit(); 

@@ -245,10 +245,10 @@ $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage
                     </button>";
                 if ($row['accepted'] == 1) {
                     // Nếu đã chấp nhận, hiển thị nút "Accept Again" và xử lý sự kiện khi nhấn nút
-                    echo "<button class='custom-btn' onclick='acceptContent({$row['draft_id']})'><img src='assets/again.png' alt='accept again'></button>";
+                    echo "<button class='custom-btn' onclick='acceptContent({$row['draft_id']}, $page)'><img src='assets/again.png' alt='accept again'></button>";
                 } else {
                     // Nếu chưa chấp nhận, hiển thị nút "Accept" và xử lý sự kiện khi nhấn nút
-                    echo "<button class='custom-btn' onclick='acceptContent({$row['draft_id']})'><img src='assets/accept.png' alt='accept'></button>";
+                    echo "<button class='custom-btn' onclick='acceptContent({$row['draft_id']}, $page)'><img src='assets/accept.png' alt='accept'></button>";
                 }
                 echo "</td>";
 
@@ -709,10 +709,9 @@ $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage
     }
 
     window.onload = () => document.getElementById('searchInput').focus();
-    function acceptContent(draftId) {
+    function acceptContent(draftId, page) {
         if (confirm("Are you sure you want to accept this content?")) {
-            // Gọi Ajax hoặc chuyển hướng đến trang xử lý accept
-            window.location.href = `accept_draft_content.php?id=${draftId}`;
+            window.location.href = `accept_draft_content.php?id=${draftId}&page=${page}`;
         }
     }
 </script>
