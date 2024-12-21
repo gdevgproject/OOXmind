@@ -287,6 +287,51 @@ $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage
     </div>
 </div>
 
+<!-- Add pagination after table -->
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <?php
+        $totalPages = getTotalPages(pdo_get_connection());
+        $range = 2; // Number of pages to show before and after current page
+        
+        // Previous button
+        $prevPage = max(1, $page - 1);
+        echo "<li class='page-item " . ($page == 1 ? 'disabled' : '') . "'>";
+        echo "<a class='page-link custom-btn d-flex align-items-center justify-content-center' href='?page=$prevPage'>";
+        echo "<img src='assets/left-arrow.png' alt='Previous' style='width: 20px; height: 20px;'>";
+        echo "</a></li>";
+        
+        // First page
+        if($page > $range + 1) {
+            echo "<li class='page-item'><a class='page-link custom-btn' href='?page=1'>1</a></li>";
+            if($page > $range + 2) {
+                echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+            }
+        }
+        
+        // Page numbers
+        for($i = max(1, $page - $range); $i <= min($totalPages, $page + $range); $i++) {
+            echo "<li class='page-item " . ($page == $i ? 'active' : '') . "'>";
+            echo "<a class='page-link custom-btn' href='?page=$i'>$i</a>";
+            echo "</li>";
+        }
+        
+        // Last page
+        if($page < $totalPages - $range) {
+            if($page < $totalPages - $range - 1) {
+                echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+            }
+            echo "<li class='page-item'><a class='page-link custom-btn' href='?page=$totalPages'>$totalPages</a></li>";
+        }
+        
+        // Next button
+        $nextPage = min($totalPages, $page + 1);
+        echo "<li class='page-item " . ($page == $totalPages ? 'disabled' : '') . "'>";
+        echo "<a class='page-link custom-btn' href='?page=$nextPage'><img src='assets/right.png' alt='Next'></a>";
+        echo "</li>";
+        ?>
+    </ul>
+</nav>
 
 <!-- Image Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel"

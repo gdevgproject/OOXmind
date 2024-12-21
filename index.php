@@ -182,6 +182,107 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
     .list-vocab-table {
         margin-top: 100px;
     }
+
+    .pagination .page-link {
+        background-color: transparent;
+        border: none;
+        color: #333;
+        margin: 0 5px;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: rgba(163, 196, 243, 0.9);
+        color: white;
+    }
+
+    .pagination .page-link:hover {
+        background-color: rgba(163, 196, 243, 0.7);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .pagination {
+        gap: 5px;
+    }
+
+    .pagination .page-link {
+        background-color: transparent;
+        border: none;
+        color: #333;
+        margin: 0;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: rgba(163, 196, 243, 0.9);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .pagination .page-link:hover:not(.disabled) {
+        background-color: rgba(163, 196, 243, 0.7);
+        transform: scale(1.1);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    /* Add smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    .pagination .page-link {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 5px;
+        border: none;
+        background: transparent;
+        color: #333;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: rgba(163, 196, 243, 0.9);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .pagination .page-link:hover:not(.disabled) {
+        background-color: rgba(163, 196, 243, 0.7);
+        transform: scale(1.1);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .pagination {
+        gap: 5px;
+    }
 </style>
 
 <div class="mx-auto list-vocab-table text-shadow-white" style="width:90%">
@@ -273,9 +374,55 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
                 $count++; // Tăng biến đếm
             }
             ?>
+        </tbody>
+    </table>
 
-
-</div>
+    <!-- After the table -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <?php
+            $totalPages = getTotalPages(pdo_get_connection());
+            $range = 2; // Number of pages to show before and after current page
+            
+            // Previous button
+            $prevPage = max(1, $page - 1);
+            echo "<li class='page-item " . ($page == 1 ? 'disabled' : '') . "'>";
+            echo "<a class='page-link custom-btn d-flex align-items-center justify-content-center' href='?page=$prevPage'>";
+            echo "<img src='assets/left-arrow.png' alt='Previous' style='width: 20px; height: 20px;'>";
+            echo "</a></li>";
+            
+            // First page
+            if($page > $range + 1) {
+                echo "<li class='page-item'><a class='page-link custom-btn' href='?page=1'>1</a></li>";
+                if($page > $range + 2) {
+                    echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                }
+            }
+            
+            // Page numbers
+            for($i = max(1, $page - $range); $i <= min($totalPages, $page + $range); $i++) {
+                echo "<li class='page-item " . ($page == $i ? 'active' : '') . "'>";
+                echo "<a class='page-link custom-btn' href='?page=$i'>$i</a>";
+                echo "</li>";
+            }
+            
+            // Last page
+            if($page < $totalPages - $range) {
+                if($page < $totalPages - $range - 1) {
+                    echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                }
+                echo "<li class='page-item'><a class='page-link custom-btn' href='?page=$totalPages'>$totalPages</a></li>";
+            }
+            
+            // Next button
+            $nextPage = min($totalPages, $page + 1);
+            echo "<li class='page-item " . ($page == $totalPages ? 'disabled' : '') . "'>";
+            echo "<a class='page-link custom-btn d-flex align-items-center justify-content-center' href='?page=$nextPage'>";
+            echo "<img src='assets/right-arrow.png' alt='Next' style='width: 20px; height: 20px;'>";
+            echo "</a></li>";
+            ?>
+        </ul>
+    </nav>
 </div>
 
 
