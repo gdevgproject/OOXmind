@@ -42,23 +42,30 @@ function fetchDraftContent($conn, $draftId)
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function insertContent($conn, $row, $newImagePath, $newVideoPath, $newAudioPath)
-{
-    $sql = "INSERT INTO content (vocab, part_of_speech, ipa, def, ex, question, answer, image_path, video_path, audio_path) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+function insertContent($conn, $row, $newImagePath, $newVideoPath, $newAudioPath) {
+    // Đảm bảo tất cả các trường đều được map đúng
+    $fields = [
+        'vocab', 'part_of_speech', 'ipa', 'def', 'ex', 'question', 'answer',
+        'level', 'correct_count', 'incorrect_count', 'create_time', 
+        'last_review', 'next_review', 'response_time', 'is_recovery'
+    ];
+    
+    $values = array_map(function($field) use ($row) {
+        return $row[$field] ?? null;
+    }, $fields);
+    
+    // Thêm các path media mới
+    $values[] = $newImagePath;
+    $values[] = $newVideoPath; 
+    $values[] = $newAudioPath;
+
+    $sql = "INSERT INTO content (" . 
+           implode(', ', $fields) . 
+           ", image_path, video_path, audio_path) VALUES (" .
+           str_repeat('?,', count($fields) + 2) . "?)";
+
     $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        $row['vocab'],
-        $row['part_of_speech'],
-        $row['ipa'],
-        $row['def'],
-        $row['ex'],
-        $row['question'],
-        $row['answer'],
-        $newImagePath,
-        $newVideoPath,
-        $newAudioPath
-    ]);
+    $stmt->execute($values);
 }
 
 function updateDraftContentStatus($conn, $draftId)

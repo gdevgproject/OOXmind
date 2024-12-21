@@ -243,8 +243,15 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
             onmouseleave='endDeleteHold()'
             onclick='confirmDelete(" . json_encode($rowId) . ")'> <!-- Thêm onclick cho xác nhận xóa -->
             <img src='assets/bin.png' alt='Delete'>
-        </button>
-    </td>";
+        </button>";
+                if ($row['accepted'] == 1) {
+                    // Nếu đã chấp nhận, hiển thị nút "Accept Again" 
+                    echo "<button class='custom-btn' onclick='acceptToDraft({$row['content_id']})'><img src='assets/again.png' alt='accept again'></button>";
+                } else {
+                    // Nếu chưa chấp nhận, hiển thị nút "Accept"
+                    echo "<button class='custom-btn' onclick='acceptToDraft({$row['content_id']})'><img src='assets/accept.png' alt='accept'></button>";
+                }
+                echo "</td>";
 
                 echo "<td class='text-center'>{$count}</td>";
                 echo "<td>$vocab $partOfSpeech<br>$ipa</td>";
@@ -462,7 +469,7 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
                 </div>
                 <div class="text-center save-close">
                     <button type="button" class="btn btn-close" data-dismiss="modal">Close</button>
-                    <h6>Enhance your skills with our resources!</h6>
+                    <h6>Hãy tận hưởng niềm vui mỗi khi hiểu bài, vì tâm trạng thoải mái giúp bộ não nhẹ nhàng và tiếp thu tốt hơn.</h6>
                     <button type="submit" class="btn btn-save" name="update">Update</button>
                 </div>
             </form>
@@ -649,6 +656,12 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
     function redirectToPracticeDraft(def, vocab) {
         console.log(def, vocab);
         window.location.href = `practice_draft.php?def=${encodeURIComponent(def)}&vocab=${encodeURIComponent(vocab)}`;
+    }
+
+    function acceptToDraft(contentId) {
+        if (confirm("Are you sure you want to copy this content to draft?")) {
+            window.location.href = `process_accept_draft_content.php?id=${contentId}`;
+        }
     }
 
     window.onload = () => document.getElementById('searchInput').focus();
