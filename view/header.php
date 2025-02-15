@@ -482,9 +482,9 @@ $randomImage = $images[array_rand($images)];
         } */
     </style>
     <script src="./sql/d3.v6.min.js"></script>
-    <script src="./sql/jquery-3.5.1.slim.min.js"></script>
-    <script src="./sql/bootstrap.min.js"></script>
-    <script>
+    <script defer src="./sql/jquery-3.5.1.slim.min.js"></script>
+    <script defer src="./sql/bootstrap.min.js"></script>
+    <script defer >
         document.addEventListener('DOMContentLoaded', function () {
             var images = <?php echo json_encode($images); ?>;
             var imageElement = document.getElementById('myImage');
@@ -515,118 +515,7 @@ $randomImage = $images[array_rand($images)];
 
 
     </script>
-</head>
-
-<body>
-    <span id="onlineTimeCounter" class="text-shadow"></span>
-    <img id="myImage" src="<?php echo $randomImage; ?>" alt="Background Image">
-
-    <!-- Audio player -->
-    <audio id="backgroundMusic" autoplay loop>
-        <source src="assets/audio/mixisoundbg.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
-
-    <div class="progress-container">
-        <div class="progress-bar color-full-line" id="progressBar" style="width: <?php echo $levelPercent; ?>%;">
-        </div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-        <div class="divider"></div>
-    </div>
-
-    <header>
-        <section class="top-bar" id="topbar">
-            <section class="color-full-line wrap-level-up" onclick="window.location.href='./home.php';">
-                <section class="level-up">
-                    <div>
-                        <p class="level"><?php echo $userLevels; ?></p>
-                        <p class="levelPercent text-shadow"><?php echo $levelPercent; ?>%</p>
-                    </div>
-                </section>
-                <section class="wrap-name">
-                    <p class="user-name">Vu Duc Minh</p>
-                    <p class="premium text-shadow">Premium</p>
-                </section>
-            </section>
-            <section class="humburgerBtn">
-                <img src="./assets/menu.png" alt="menu" id="humburger-icon">
-            </section>
-        </section>
-
-        <a href="./index.php" class="profile">
-            <img src="./assets/minh.jpg" alt="user image">
-        </a>
-        <ul class="avt-list text-shadow">
-            <li style="background-color: #e57373; padding: 1px 6px; border-radius: 6px;">
-                <?php echo number_format($folderSizeGB, 3); ?> GB
-            </li>
-            <li style="background-color: <?= $vocabColor; ?>; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
-                created <?php echo $vocabCreatedCountToday; ?>
-            </li>
-            <li style="background-color: <?= $reviewedColor; ?>; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
-                reviewed <?php echo $vocabReviewedCount; ?>
-            </li>
-        </ul>
-
-        <nav class="afteHumburgerBtn" id="menu">
-            <ul>
-                <li id="reviewnow" class="custom-btn">
-                    <a href="./home.php">
-                        <img src="<?php echo $countNextReview == 0 ? 'assets/perfection.png' : 'assets/brainred.png'; ?>"
-                            alt="Home">
-                        <p><strong><?php echo $countNextReview == 0 ? 'GOOD' : 'REVIEW NOW'; ?></strong></p>
-                    </a>
-                </li>
-                <li id="notebook" class="custom-btn">
-                    <a href="./index.php">
-                        <img src="assets/writing.png" alt="Notebook">
-                        <p><strong>NOTEBOOK <?php echo $totalVocabCount; ?></strong></p>
-                    </a>
-                </li>
-                <li id="sketchbook" class="custom-btn">
-                    <a href="./draft_content.php">
-                        <img src="assets/draft.png" alt="Draft">
-                        <p><strong>SKETCHBOOK <?php echo $totalDraftCount; ?></strong></p>
-                    </a>
-                </li>
-                <li id="mastery" class="custom-btn">
-                    <a href="./mastery.php">
-                        <img src="assets/statistic.png" alt="Draft">
-                        <p><strong>MASTERY</strong></p>
-                    </a>
-                </li>
-                <li id="practice" class="custom-btn">
-                    <a href="./practice_draft.php">
-                        <img src="assets/practice_draft.png" alt="Draft">
-                        <p><strong>PRACTICE <?php echo $totalCountPracticeDraft; ?></strong></p>
-                    </a>
-                </li>
-                <li id="statistic" class="custom-btn">
-                    <a href="./statistic.php">
-                        <img src="assets/graph.png" alt="graph">
-                        <p><strong>STATISTIC</strong></p>
-                    </a>
-
-                </li>
-                <li id="toggle-music" class="custom-btn">
-                    <a href="#">
-                        <img src="assets/sound.png" alt="Toggle Music" id="toggle-music-icon">
-                        <p><strong>TOGGLE MUSIC</strong></p>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </header>
-
-    <script>
+    <script defer>
         document.addEventListener("DOMContentLoaded", function () {
             const audio = document.getElementById('backgroundMusic');
             const toggleMusicButton = document.getElementById('toggle-music');
@@ -790,5 +679,117 @@ $randomImage = $images[array_rand($images)];
         };
         // ================
     </script>
+</head>
+
+<body>
+    <span id="onlineTimeCounter" class="text-shadow"></span>
+    <img id="myImage" src="<?php echo $randomImage; ?>" alt="Background Image">
+
+    <!-- Audio player -->
+    <audio id="backgroundMusic" autoplay loop>
+        <source src="assets/audio/mixisoundbg.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="progress-container">
+        <div class="progress-bar color-full-line" id="progressBar" style="width: <?php echo $levelPercent; ?>%;">
+        </div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+        <div class="divider"></div>
+    </div>
+
+    <header>
+        <section class="top-bar" id="topbar">
+            <section class="color-full-line wrap-level-up" onclick="window.location.href='./home.php';">
+                <section class="level-up">
+                    <div>
+                        <p class="level"><?php echo $userLevels; ?></p>
+                        <p class="levelPercent text-shadow"><?php echo $levelPercent; ?>%</p>
+                    </div>
+                </section>
+                <section class="wrap-name">
+                    <p class="user-name">Vu Duc Minh</p>
+                    <p class="premium text-shadow">Premium</p>
+                </section>
+            </section>
+            <section class="humburgerBtn">
+                <img src="./assets/menu.png" alt="menu" id="humburger-icon">
+            </section>
+        </section>
+
+        <a href="./index.php" class="profile">
+            <img src="./assets/minh.jpg" alt="user image">
+        </a>
+        <ul class="avt-list text-shadow">
+            <li style="background-color: #e57373; padding: 1px 6px; border-radius: 6px;">
+                <?php echo number_format($folderSizeGB, 3); ?> GB
+            </li>
+            <li style="background-color: <?= $vocabColor; ?>; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
+                created <?php echo $vocabCreatedCountToday; ?>
+            </li>
+            <li style="background-color: <?= $reviewedColor; ?>; padding: 1px 6px; border-radius: 6px; margin-top: 2px;">
+                reviewed <?php echo $vocabReviewedCount; ?>
+            </li>
+        </ul>
+
+        <nav class="afteHumburgerBtn" id="menu">
+            <ul>
+                <li id="reviewnow" class="custom-btn">
+                    <a href="./home.php">
+                        <img src="<?php echo $countNextReview == 0 ? 'assets/perfection.png' : 'assets/brainred.png'; ?>"
+                            alt="Home">
+                        <p><strong><?php echo $countNextReview == 0 ? 'GOOD' : 'REVIEW NOW'; ?></strong></p>
+                    </a>
+                </li>
+                <li id="notebook" class="custom-btn">
+                    <a href="./index.php">
+                        <img src="assets/writing.png" alt="Notebook">
+                        <p><strong>NOTEBOOK <?php echo $totalVocabCount; ?></strong></p>
+                    </a>
+                </li>
+                <li id="sketchbook" class="custom-btn">
+                    <a href="./draft_content.php">
+                        <img src="assets/draft.png" alt="Draft">
+                        <p><strong>SKETCHBOOK <?php echo $totalDraftCount; ?></strong></p>
+                    </a>
+                </li>
+                <li id="mastery" class="custom-btn">
+                    <a href="./mastery.php">
+                        <img src="assets/statistic.png" alt="Draft">
+                        <p><strong>MASTERY</strong></p>
+                    </a>
+                </li>
+                <li id="practice" class="custom-btn">
+                    <a href="./practice_draft.php">
+                        <img src="assets/practice_draft.png" alt="Draft">
+                        <p><strong>PRACTICE <?php echo $totalCountPracticeDraft; ?></strong></p>
+                    </a>
+                </li>
+                <li id="statistic" class="custom-btn">
+                    <a href="./statistic.php">
+                        <img src="assets/graph.png" alt="graph">
+                        <p><strong>STATISTIC</strong></p>
+                    </a>
+
+                </li>
+                <li id="toggle-music" class="custom-btn">
+                    <a href="#">
+                        <img src="assets/sound.png" alt="Toggle Music" id="toggle-music-icon">
+                        <p><strong>TOGGLE MUSIC</strong></p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    
 
     <body>

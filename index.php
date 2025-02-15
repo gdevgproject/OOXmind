@@ -462,7 +462,7 @@ $contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
                 </div>
                 <div class="text-center save-close">
                     <button type="button" class="btn btn-close" data-dismiss="modal">Close</button>
-                    <h6>Enhance your skills with our resources!</h6>
+                    <h6>Hãy tận hưởng niềm vui mỗi khi hiểu bài, vì tâm trạng thoải mái giúp bộ não nhẹ nhàng và tiếp thu tốt hơn.</h6>
                     <button type="submit" class="btn btn-save" name="update">Update</button>
                 </div>
             </form>

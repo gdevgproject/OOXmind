@@ -293,99 +293,7 @@ $colorIndex = 6;
             }
         }
     </style>
-
-    <!-- Add New Modal -->
-    <div class="modal" id="addNewModal" tabindex="-1" role="dialog" aria-labelledby="addNewModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form action="process_add_content.php" method="post" enctype="multipart/form-data">
-                    <div class="container-form">
-                        <div class="left-form">
-                            <!-- Các trường thông tin khác -->
-                            <div class="form-group">
-                                <label for="newVocab">Vocabulary</label>
-                                <input type="text" class="form-control soft-input" id="newVocab" name="newVocab">
-                            </div>
-                            <div class="form-group">
-                                <label for="newPartOfSpeech">Part of speech</label>
-                                <input type="text" class="form-control soft-input" id="newPartOfSpeech"
-                                    name="newPartOfSpeech" value="()">
-                            </div>
-                            <div class="form-group">
-                                <label for="newIPA">IPA</label>
-                                <input type="text" class="form-control soft-input" id="newIPA" name="newIPA">
-                            </div>
-                            <div class="form-group">
-                                <label for="newDef">Definition</label>
-                                <textarea class="form-control soft-input" id="newDef" name="newDef" rows="4"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="newExample">Example</label>
-                                <textarea class="form-control soft-input" id="newExample" name="newExample"
-                                    rows="2"></textarea>
-                            </div>
-                        </div>
-                        <div class="right-form">
-                            <div class="form-group">
-                                <label for="newQuestion">Question</label>
-                                <textarea class="form-control soft-input" id="newQuestion" name="newQuestion"
-                                    rows="4"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="newAnswer">Answer</label>
-                                <textarea class="form-control soft-input" id="newAnswer" name="newAnswer"
-                                    rows="2"></textarea>
-                            </div>
-                            <div class="upload-container">
-                                <div class="form-group">
-                                    <label for="newImage">Image</label>
-                                    <div class="upload-preview">
-                                        <label class="custom-file-upload">
-                                            <input type="file" id="newImage" name="newImage" accept="image/*"
-                                                onchange="previewFile(this, 'imagePreview')">
-                                            Choose Image
-                                        </label>
-                                        <img id="imagePreview" class="preview-box" alt="Image Preview">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="newVideo">Video</label>
-                                    <div class="upload-preview">
-                                        <label class="custom-file-upload">
-                                            <input type="file" id="newVideo" name="newVideo" accept="video/*"
-                                                onchange="previewFile(this, 'videoPreview')">
-                                            Choose Video
-                                        </label>
-                                        <video id="videoPreview" class="preview-box" controls></video>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="newAudio">Audio</label>
-                                    <div class="upload-preview">
-                                        <label class="custom-file-upload">
-                                            <input type="file" id="newAudio" name="newAudio" accept="audio/*"
-                                                onchange="previewFile(this, 'audioPreview')">
-                                            Choose Audio
-                                        </label>
-                                        <audio id="audioPreview" class="preview-box" controls></audio>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-center save-close">
-                        <button type="button" class="btn btn-close" data-dismiss="modal">Close</button>
-                        <h6>Get an IELTS score of 7.5!</h6>
-                        <button type="submit" class="btn btn-save" name="save">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-
-    <script>
+<script defer>
         function previewFile(input, previewId) {
             const file = input.files[0];
             if (file) {
@@ -504,5 +412,94 @@ $colorIndex = 6;
             .attr("stroke-width", 7);
 
     </script>
+    <!-- Add New Modal -->
+    <div class="modal" id="addNewModal" tabindex="-1" role="dialog" aria-labelledby="addNewModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="process_add_content.php" method="post" enctype="multipart/form-data">
+                    <div class="container-form">
+                        <div class="left-form">
+                            <!-- Các trường thông tin khác -->
+                            <div class="form-group">
+                                <label for="newVocab">Vocabulary</label>
+                                <input type="text" class="form-control soft-input" id="newVocab" name="newVocab">
+                            </div>
+                            <div class="form-group">
+                                <label for="newPartOfSpeech">Part of speech</label>
+                                <input type="text" class="form-control soft-input" id="newPartOfSpeech"
+                                    name="newPartOfSpeech" value="()">
+                            </div>
+                            <div class="form-group">
+                                <label for="newIPA">IPA</label>
+                                <input type="text" class="form-control soft-input" id="newIPA" name="newIPA">
+                            </div>
+                            <div class="form-group">
+                                <label for="newDef">Definition</label>
+                                <textarea class="form-control soft-input" id="newDef" name="newDef" rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="newExample">Example</label>
+                                <textarea class="form-control soft-input" id="newExample" name="newExample"
+                                    rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="right-form">
+                            <div class="form-group">
+                                <label for="newQuestion">Question</label>
+                                <textarea class="form-control soft-input" id="newQuestion" name="newQuestion"
+                                    rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="newAnswer">Answer</label>
+                                <textarea class="form-control soft-input" id="newAnswer" name="newAnswer"
+                                    rows="2"></textarea>
+                            </div>
+                            <div class="upload-container">
+                                <div class="form-group">
+                                    <label for="newImage">Image</label>
+                                    <div class="upload-preview">
+                                        <label class="custom-file-upload">
+                                            <input type="file" id="newImage" name="newImage" accept="image/*"
+                                                onchange="previewFile(this, 'imagePreview')">
+                                            Choose Image
+                                        </label>
+                                        <img id="imagePreview" class="preview-box" alt="Image Preview">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newVideo">Video</label>
+                                    <div class="upload-preview">
+                                        <label class="custom-file-upload">
+                                            <input type="file" id="newVideo" name="newVideo" accept="video/*"
+                                                onchange="previewFile(this, 'videoPreview')">
+                                            Choose Video
+                                        </label>
+                                        <video id="videoPreview" class="preview-box" controls></video>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newAudio">Audio</label>
+                                    <div class="upload-preview">
+                                        <label class="custom-file-upload">
+                                            <input type="file" id="newAudio" name="newAudio" accept="audio/*"
+                                                onchange="previewFile(this, 'audioPreview')">
+                                            Choose Audio
+                                        </label>
+                                        <audio id="audioPreview" class="preview-box" controls></audio>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center save-close">
+                        <button type="button" class="btn btn-close" data-dismiss="modal">Close</button>
+                        <h6>Get an IELTS score of 7.5!</h6>
+                        <button type="submit" class="btn btn-save" name="save">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     </body>
     </html>
