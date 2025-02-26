@@ -4,8 +4,8 @@ include 'view/header.php';
 // Database queries for statistics
 function getLastWeekActivity($conn)
 {
-  $sql = "SELECT activity_date, vocab_reviewed_count, total_time_spent 
-            FROM activity_log 
+  $sql = "SELECT activity_date, vocab_reviewed_count, total_time_spent
+            FROM activity_log
             WHERE activity_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
             ORDER BY activity_date ASC";
   $stmt = $conn->prepare($sql);
@@ -15,7 +15,7 @@ function getLastWeekActivity($conn)
 
 function getMonthlyActivity($conn)
 {
-  $sql = "SELECT 
+  $sql = "SELECT
                 YEAR(activity_date) as year,
                 MONTH(activity_date) as month,
                 SUM(vocab_reviewed_count) as total_reviewed,
@@ -36,11 +36,23 @@ function getVocabByLevel($conn)
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function getVocabVsQuestionDistribution($conn)
+{
+  $sql = "SELECT
+            CASE WHEN vocab != '' AND vocab IS NOT NULL THEN 'Vocabulary' ELSE 'Question' END as content_type,
+            COUNT(*) as count
+          FROM content
+          GROUP BY content_type";
+  $stmt = $conn->prepare($sql);
+  $stmt->execute();
+  return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 function getTopPerformingVocab($conn)
 {
-  $sql = "SELECT vocab, def, level, correct_count, incorrect_count, 
+  $sql = "SELECT vocab, def, level, correct_count, incorrect_count,
             (correct_count / (correct_count + incorrect_count)) * 100 as accuracy_rate
-            FROM content 
+            FROM content
             WHERE (correct_count + incorrect_count) > 3
             ORDER BY accuracy_rate DESC, level DESC
             LIMIT 10";
@@ -51,9 +63,9 @@ function getTopPerformingVocab($conn)
 
 function getLowestPerformingVocab($conn)
 {
-  $sql = "SELECT vocab, def, level, correct_count, incorrect_count, 
+  $sql = "SELECT vocab, def, level, correct_count, incorrect_count,
             (correct_count / (correct_count + incorrect_count)) * 100 as accuracy_rate
-            FROM content 
+            FROM content
             WHERE (correct_count + incorrect_count) > 3
             ORDER BY accuracy_rate ASC, level DESC
             LIMIT 10";
@@ -64,8 +76,8 @@ function getLowestPerformingVocab($conn)
 
 function getReviewScheduleDistribution($conn)
 {
-  $sql = "SELECT 
-                CASE 
+  $sql = "SELECT
+                CASE
                     WHEN next_review IS NULL THEN 'Not Scheduled'
                     WHEN next_review <= NOW() THEN 'Overdue'
                     WHEN next_review <= DATE_ADD(NOW(), INTERVAL 1 DAY) THEN 'Today'
@@ -82,7 +94,7 @@ function getReviewScheduleDistribution($conn)
 
 function getStudyTimeDistribution($conn)
 {
-  $sql = "SELECT 
+  $sql = "SELECT
                 HOUR(open_time) as hour_of_day,
                 COUNT(*) as session_count,
                 AVG(total_time_spent) as avg_time_spent
@@ -96,7 +108,7 @@ function getStudyTimeDistribution($conn)
 
 function getProgressOverTime($conn)
 {
-  $sql = "SELECT 
+  $sql = "SELECT
                 DATE_FORMAT(create_time, '%Y-%m') as month,
                 COUNT(*) as new_vocab_count,
                 AVG(level) as avg_level
@@ -110,43 +122,189 @@ function getProgressOverTime($conn)
 
 function getLearningStreak($conn)
 {
-  $sql = "SELECT 
-                COUNT(*) as streak_length
-            FROM (
-                SELECT 
-                    activity_date,
-                    @row_num := @row_num + 1 as row_num,
-                    DATEDIFF(activity_date, @base_date) as date_diff
-                FROM 
-                    activity_log,
-                    (SELECT @row_num := 0, @base_date := '2000-01-01') as vars
-                WHERE 
-                    vocab_reviewed_count > 0
-                ORDER BY 
-                    activity_date DESC
-            ) as numbered
-            WHERE 
-                row_num = date_diff
-            LIMIT 1";
+  // This improved streak function checks any activity day (content creation, review, etc.)
+  // Using a simpler approach to avoid complex SQL syntax issues
+  try {
+    // First get all activity dates (both from activity logs and content creation)
+    $sql = "SELECT activity_date as date FROM activity_log
+            UNION
+            SELECT DATE(create_time) as date FROM content
+            ORDER BY date";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $allDates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if (empty($allDates)) {
+      return 0;
+    }
+
+    // Calculate longest streak manually
+    $maxStreak = 1;
+    $currentStreak = 1;
+
+    for ($i = 1; $i < count($allDates); $i++) {
+      $prevDate = strtotime($allDates[$i - 1]);
+      $currDate = strtotime($allDates[$i]);
+
+      // Check if dates are consecutive
+      if (($currDate - $prevDate) == 86400) { // 86400 seconds = 1 day
+        $currentStreak++;
+      }
+      // If more than 1 day gap, reset streak
+      else if (($currDate - $prevDate) > 86400) {
+        $maxStreak = max($maxStreak, $currentStreak);
+        $currentStreak = 1;
+      }
+    }
+
+    // Final check to capture the last streak
+    $maxStreak = max($maxStreak, $currentStreak);
+    return $maxStreak;
+  } catch (Exception $e) {
+    // Fallback if error occurs
+    return 0;
+  }
+}
+
+function getCurrentStreak($conn)
+{
+  // Get the current streak (consecutive days of activity up to today)
+  try {
+    // First get all activity dates (both from activity logs and content creation)
+    $sql = "SELECT activity_date as date FROM activity_log
+            UNION
+            SELECT DATE(create_time) as date FROM content
+            ORDER BY date DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $allDates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if (empty($allDates)) {
+      return 0;
+    }
+
+    // Check if there's activity today
+    $today = date('Y-m-d');
+    $mostRecentDate = $allDates[0];
+
+    // If no activity today, streak is 0
+    if ($mostRecentDate != $today) {
+      // Check if there was activity yesterday - if so streak is at least 1
+      $yesterday = date('Y-m-d', strtotime('-1 day'));
+      if ($mostRecentDate == $yesterday) {
+        $startIndex = 0;
+      } else {
+        return 0; // No activity today or yesterday, streak is 0
+      }
+    } else {
+      $startIndex = 0; // Start from today
+    }
+
+    // Calculate current streak - count consecutive days
+    $currentStreak = 1;
+    for ($i = $startIndex; $i < count($allDates) - 1; $i++) {
+      $currDate = strtotime($allDates[$i]);
+      $nextDate = strtotime($allDates[$i + 1]);
+
+      // Check if dates are consecutive
+      if (($currDate - $nextDate) == 86400) { // 86400 seconds = 1 day
+        $currentStreak++;
+      } else {
+        break; // Break on first non-consecutive day
+      }
+    }
+
+    return $currentStreak;
+  } catch (Exception $e) {
+    return getSimpleCurrentStreak($conn);
+  }
+}
+
+function getSimpleCurrentStreak($conn)
+{
+  // Even simpler approach for current streak calculation
+  try {
+    // Check if there's activity today
+    $sql = "SELECT COUNT(*) as has_activity FROM (
+              SELECT activity_date as date FROM activity_log WHERE activity_date = CURDATE()
+              UNION
+              SELECT DATE(create_time) as date FROM content WHERE DATE(create_time) = CURDATE()
+            ) as today_check";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $todayResult = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // If no activity today, return 0
+    if ($todayResult['has_activity'] == 0) {
+      return 0;
+    }
+
+    // Check for consecutive days before today
+    $streak = 1; // Start with 1 for today
+    $dayOffset = 1;
+
+    while ($dayOffset <= 30) { // Check up to 30 days back
+      $sql = "SELECT COUNT(*) as has_activity FROM (
+                SELECT activity_date as date FROM activity_log
+                WHERE activity_date = DATE_SUB(CURDATE(), INTERVAL {$dayOffset} DAY)
+                UNION
+                SELECT DATE(create_time) as date FROM content
+                WHERE DATE(create_time) = DATE_SUB(CURDATE(), INTERVAL {$dayOffset} DAY)
+              ) as day_check";
+      $stmt = $conn->prepare($sql);
+      $stmt->execute();
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      if ($result['has_activity'] > 0) {
+        $streak++;
+        $dayOffset++;
+      } else {
+        break; // Break on first day without activity
+      }
+    }
+
+    return $streak;
+  } catch (Exception $e) {
+    // Absolute minimum fallback
+    return 0;
+  }
+}
+
+function getContentTypePerformance($conn)
+{
+  $sql = "SELECT
+            CASE
+              WHEN vocab != '' AND vocab IS NOT NULL THEN 'Vocabulary'
+              ELSE 'Question'
+            END as content_type,
+            SUM(correct_count) as total_correct,
+            SUM(incorrect_count) as total_incorrect,
+            SUM(correct_count + incorrect_count) as total_attempts,
+            CASE
+              WHEN SUM(correct_count + incorrect_count) > 0
+              THEN (SUM(correct_count) / SUM(correct_count + incorrect_count)) * 100
+              ELSE 0
+            END as accuracy_rate
+          FROM content
+          GROUP BY content_type";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
-  $result = $stmt->fetch(PDO::FETCH_ASSOC);
-  return $result ? $result['streak_length'] : 0;
+  return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function getReviewEfficiency($conn)
 {
-  $sql = "SELECT 
-                content_id, vocab, 
-                correct_count, 
+  $sql = "SELECT
+                content_id, vocab,
+                correct_count,
                 incorrect_count,
                 (correct_count + incorrect_count) as total_attempts,
                 (correct_count / (correct_count + incorrect_count)) * 100 as success_rate
-            FROM 
+            FROM
                 content
-            WHERE 
+            WHERE
                 (correct_count + incorrect_count) > 0
-            ORDER BY 
+            ORDER BY
                 success_rate DESC";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
@@ -173,9 +331,21 @@ function calculateOverallStats($conn)
   $stmtTotalDays->execute();
   $totalDays = $stmtTotalDays->fetch(PDO::FETCH_ASSOC)['total_days'];
 
+  // Total content items
+  $sqlTotalItems = "SELECT COUNT(*) as total_items FROM content";
+  $stmtTotalItems = $conn->prepare($sqlTotalItems);
+  $stmtTotalItems->execute();
+  $totalItems = $stmtTotalItems->fetch(PDO::FETCH_ASSOC)['total_items'];
+
+  // Content created per day
+  $sqlCreatedPerDay = "SELECT COUNT(*)/COUNT(DISTINCT DATE(create_time)) as created_per_day FROM content";
+  $stmtCreatedPerDay = $conn->prepare($sqlCreatedPerDay);
+  $stmtCreatedPerDay->execute();
+  $createdPerDay = $stmtCreatedPerDay->fetch(PDO::FETCH_ASSOC)['created_per_day'];
+
   // Success rate
-  $sqlSuccessRate = "SELECT 
-                        SUM(correct_count) as total_correct, 
+  $sqlSuccessRate = "SELECT
+                        SUM(correct_count) as total_correct,
                         SUM(incorrect_count) as total_incorrect
                       FROM content";
   $stmtSuccessRate = $conn->prepare($sqlSuccessRate);
@@ -188,7 +358,9 @@ function calculateOverallStats($conn)
     'avg_daily_reviews' => round($dailyAvg, 1),
     'avg_session_time' => round($timeAvg / 60, 1), // Convert to minutes
     'total_study_days' => $totalDays,
-    'success_rate' => round($successRate, 1)
+    'success_rate' => round($successRate, 1),
+    'total_items' => $totalItems,
+    'created_per_day' => round($createdPerDay, 1)
   ];
 }
 
@@ -197,12 +369,27 @@ $conn = pdo_get_connection();
 $weeklyActivity = getLastWeekActivity($conn);
 $monthlyActivity = getMonthlyActivity($conn);
 $vocabByLevel = getVocabByLevel($conn);
+$contentTypeData = getVocabVsQuestionDistribution($conn);
+$contentTypePerf = getContentTypePerformance($conn);
 $topVocabs = getTopPerformingVocab($conn);
 $lowestVocabs = getLowestPerformingVocab($conn);
 $reviewSchedule = getReviewScheduleDistribution($conn);
 $studyTime = getStudyTimeDistribution($conn);
 $progressData = getProgressOverTime($conn);
-$streak = getLearningStreak($conn);
+
+// Use try-catch to handle potential errors in the streak calculations
+try {
+  $maxStreak = getLearningStreak($conn);
+} catch (Exception $e) {
+  $maxStreak = 0;
+}
+
+try {
+  $currentStreak = getCurrentStreak($conn);
+} catch (Exception $e) {
+  $currentStreak = 0;
+}
+
 $overall = calculateOverallStats($conn);
 $reviewEfficiency = getReviewEfficiency($conn);
 
@@ -230,6 +417,21 @@ $levelChartData = json_encode(array_map(function ($item) {
     'count' => $item['count']
   ];
 }, $vocabByLevel));
+
+$contentTypeChartData = json_encode(array_map(function ($item) {
+  return [
+    'type' => $item['content_type'],
+    'count' => $item['count']
+  ];
+}, $contentTypeData));
+
+$contentTypePerfData = json_encode(array_map(function ($item) {
+  return [
+    'type' => $item['content_type'],
+    'accuracy' => round($item['accuracy_rate'], 1),
+    'attempts' => $item['total_attempts']
+  ];
+}, $contentTypePerf));
 
 $reviewScheduleData = json_encode(array_map(function ($item) {
   return [
@@ -272,8 +474,11 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
       <div class="card bg-dark text-white">
         <div class="card-body text-center">
           <h5 class="card-title">Current Streak</h5>
-          <h2 class="display-4"><?php echo $streak; ?></h2>
+          <h2 class="display-4"><?php echo $currentStreak; ?></h2>
           <p class="card-text">consecutive days</p>
+          <?php if ($maxStreak > $currentStreak): ?>
+            <small class="text-muted">Best: <?php echo $maxStreak; ?> days</small>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -283,6 +488,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
           <h5 class="card-title">Success Rate</h5>
           <h2 class="display-4"><?php echo round($overallEfficiency, 1); ?>%</h2>
           <p class="card-text">correct answers</p>
+          <small class="text-muted"><?php echo $totalReviewed; ?> total attempts</small>
         </div>
       </div>
     </div>
@@ -292,6 +498,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
           <h5 class="card-title">Daily Reviews</h5>
           <h2 class="display-4"><?php echo $overall['avg_daily_reviews']; ?></h2>
           <p class="card-text">items per day</p>
+          <small class="text-muted">Total: <?php echo $overall['total_items']; ?> items</small>
         </div>
       </div>
     </div>
@@ -301,6 +508,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
           <h5 class="card-title">Study Time</h5>
           <h2 class="display-4"><?php echo $overall['avg_session_time']; ?></h2>
           <p class="card-text">minutes per day</p>
+          <small class="text-muted"><?php echo $overall['total_study_days']; ?> study days</small>
         </div>
       </div>
     </div>
@@ -320,11 +528,72 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
     </div>
     <div class="col-md-4 mb-4">
       <div class="card bg-dark text-white">
-        <div class="card-header">
-          <h5 class="mb-0">Vocabulary by Level</h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Content Distribution</h5>
+          <div>
+            <button class="btn btn-sm btn-outline-light active" id="showLevelsBtn">By Level</button>
+            <button class="btn btn-sm btn-outline-light" id="showTypesBtn">By Type</button>
+          </div>
         </div>
         <div class="card-body">
-          <canvas id="vocabLevelChart" height="240"></canvas>
+          <div id="vocabLevelChartContainer">
+            <canvas id="vocabLevelChart" height="240"></canvas>
+          </div>
+          <div id="contentTypeChartContainer" style="display:none;">
+            <canvas id="contentTypeChart" height="240"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Type Performance -->
+  <div class="row mb-4">
+    <div class="col-12 mb-4">
+      <div class="card bg-dark text-white">
+        <div class="card-header">
+          <h5 class="mb-0">Content Type Performance</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-8">
+              <canvas id="contentTypePerfChart" height="200"></canvas>
+            </div>
+            <div class="col-md-4 d-flex justify-content-center align-items-center">
+              <div class="text-center p-3">
+                <?php foreach ($contentTypePerf as $type): ?>
+                  <div class="mb-3">
+                    <h4><?php echo htmlspecialchars($type['content_type']); ?></h4>
+                    <h3 class="mb-1"><?php echo round($type['accuracy_rate'], 1); ?>%</h3>
+                    <p class="text-muted mb-0">accuracy rate</p>
+                    <small class="text-muted"><?php echo $type['total_attempts']; ?> total attempts</small>
+                  </div>
+                <?php endforeach; ?>
+                <p class="mt-3 mb-0"><i class="fa fa-lightbulb-o text-warning"></i>
+                  <?php if (count($contentTypePerf) > 1):
+                    $vocabType = null;
+                    $questionType = null;
+                    foreach ($contentTypePerf as $type) {
+                      if ($type['content_type'] == 'Vocabulary') $vocabType = $type;
+                      if ($type['content_type'] == 'Question') $questionType = $type;
+                    }
+
+                    if ($vocabType && $questionType):
+                      if ($vocabType['accuracy_rate'] > $questionType['accuracy_rate'] + 10): ?>
+                        You're performing significantly better with vocabulary than questions.
+                      <?php elseif ($questionType['accuracy_rate'] > $vocabType['accuracy_rate'] + 10): ?>
+                        You're performing significantly better with questions than vocabulary.
+                      <?php else: ?>
+                        You have balanced performance across both content types.
+                    <?php endif;
+                    endif;
+                  else: ?>
+                    Focus on creating content of different types for comparative insights.
+                  <?php endif; ?>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -366,7 +635,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
             <table class="table table-dark table-striped">
               <thead>
                 <tr>
-                  <th>Vocabulary</th>
+                  <th>Content</th>
                   <th>Level</th>
                   <th>Correct</th>
                   <th>Incorrect</th>
@@ -376,7 +645,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
               <tbody>
                 <?php foreach ($topVocabs as $vocab): ?>
                   <tr>
-                    <td><?php echo htmlspecialchars($vocab['vocab']); ?></td>
+                    <td><?php echo htmlspecialchars($vocab['vocab'] ? $vocab['vocab'] : '(Question)'); ?></td>
                     <td><?php echo $vocab['level']; ?></td>
                     <td><?php echo $vocab['correct_count']; ?></td>
                     <td><?php echo $vocab['incorrect_count']; ?></td>
@@ -399,7 +668,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
             <table class="table table-dark table-striped">
               <thead>
                 <tr>
-                  <th>Vocabulary</th>
+                  <th>Content</th>
                   <th>Level</th>
                   <th>Correct</th>
                   <th>Incorrect</th>
@@ -409,7 +678,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
               <tbody>
                 <?php foreach ($lowestVocabs as $vocab): ?>
                   <tr>
-                    <td><?php echo htmlspecialchars($vocab['vocab']); ?></td>
+                    <td><?php echo htmlspecialchars($vocab['vocab'] ? $vocab['vocab'] : '(Question)'); ?></td>
                     <td><?php echo $vocab['level']; ?></td>
                     <td><?php echo $vocab['correct_count']; ?></td>
                     <td><?php echo $vocab['incorrect_count']; ?></td>
@@ -430,12 +699,12 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
       <div class="card bg-dark text-white">
         <div class="card-header">
           <h5 class="mb-0">Smart Learning Insights</h5>
+          <p class="text-muted mb-0">Personalized learning tips based on user's statistics</p>
         </div>
         <div class="card-body">
           <?php
           // Generate personalized learning tips based on user's statistics
           $tips = [];
-
           // Tip based on best study time
           $bestStudyHour = 0;
           $maxStudyEfficiency = 0;
@@ -446,7 +715,6 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
               $bestStudyHour = $hour['hour_of_day'];
             }
           }
-
           $amPm = $bestStudyHour >= 12 ? 'PM' : 'AM';
           $displayHour = $bestStudyHour > 12 ? ($bestStudyHour - 12) : $bestStudyHour;
           if ($bestStudyHour == 0) $displayHour = 12;
@@ -461,21 +729,18 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
               break;
             }
           }
-
           // Tip based on consistency
-          if ($streak < 3) {
-            $tips[] = "Your current streak is <strong>{$streak} days</strong>. Consistency is key to effective learning. Try to review at least a few items every day.";
-          } else if ($streak >= 7) {
-            $tips[] = "Great job maintaining a <strong>{$streak}-day streak</strong>! Your consistency is paying off. Keep it up!";
+          if ($currentStreak < 3) {
+            $tips[] = "Your current streak is <strong>{$currentStreak} days</strong>. Consistency is key to effective learning. Try to review at least a few items every day.";
+          } else if ($currentStreak >= 7) {
+            $tips[] = "Great job maintaining a <strong>{$currentStreak}-day streak</strong>! Your consistency is paying off. Keep it up!";
           }
-
           // Tip based on accuracy
           if ($overallEfficiency < 70) {
             $tips[] = "Your overall success rate is <strong>" . round($overallEfficiency, 1) . "%</strong>. Consider slowing down and focusing on quality over quantity in your reviews.";
           } else if ($overallEfficiency > 90) {
             $tips[] = "Your success rate is impressively high at <strong>" . round($overallEfficiency, 1) . "%</strong>. You might benefit from challenging yourself with more difficult material.";
           }
-
           // Display the tips
           echo '<div class="row">';
           foreach ($tips as $index => $tip) {
@@ -497,9 +762,9 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Scripts for Charts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // Set default Chart.js colors that work well with dark theme
@@ -555,6 +820,11 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
               display: true,
               text: 'Minutes Studied'
             }
+          },
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
           }
         },
         plugins: {
@@ -569,7 +839,6 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
     // Vocabulary by Level Chart
     const levelData = <?php echo $levelChartData; ?>;
     const levelCtx = document.getElementById('vocabLevelChart').getContext('2d');
-
     const levels = levelData.map(item => `Level ${item.level}`);
     const counts = levelData.map(item => item.count);
 
@@ -608,13 +877,139 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
           tooltip: {
             callbacks: {
               label: function(context) {
-                const label = context.label || '';
+                let label = context.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed) {
+                  label += context.parsed + ' ';
+                }
                 const value = context.raw || 0;
                 const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                 const percentage = Math.round((value / total) * 100);
-                return `${label}: ${value} (${percentage}%)`;
+                return `${label} (${percentage}%)`;
               }
             }
+          }
+        }
+      }
+    });
+
+    // Content Type Chart
+    const contentTypeData = <?php echo $contentTypeChartData; ?>;
+    const contentTypeCtx = document.getElementById('contentTypeChart').getContext('2d');
+    const contentTypes = contentTypeData.map(item => item.type);
+    const contentCounts = contentTypeData.map(item => item.count);
+
+    new Chart(contentTypeCtx, {
+      type: 'pie',
+      data: {
+        labels: contentTypes,
+        datasets: [{
+          data: contentCounts,
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)'
+          ],
+          borderColor: 'rgba(255, 255, 255, 0.5)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              padding: 10
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed) {
+                  label += context.parsed + ' ';
+                }
+                const value = context.raw || 0;
+                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const percentage = Math.round((value / total) * 100);
+                return `${label} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Content Type Performance Chart
+    const contentTypePerfData = <?php echo $contentTypePerfData; ?>;
+    const contentTypePerfCtx = document.getElementById('contentTypePerfChart').getContext('2d');
+    const contentPerfTypes = contentTypePerfData.map(item => item.type);
+    const contentPerfAccuracy = contentTypePerfData.map(item => item.accuracy);
+    const contentPerfAttempts = contentTypePerfData.map(item => item.attempts);
+
+    new Chart(contentTypePerfCtx, {
+      type: 'bar',
+      data: {
+        labels: contentPerfTypes,
+        datasets: [{
+          label: 'Accuracy Rate (%)',
+          data: contentPerfAccuracy,
+          backgroundColor: 'rgba(75, 192, 192, 0.7)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+          yAxisID: 'y'
+        }, {
+          label: 'Total Attempts',
+          data: contentPerfAttempts,
+          backgroundColor: 'rgba(255, 159, 64, 0.7)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 1,
+          type: 'line',
+          yAxisID: 'y1'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            position: 'left',
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            title: {
+              display: true,
+              text: 'Accuracy Rate (%)'
+            }
+          },
+          y1: {
+            beginAtZero: true,
+            position: 'right',
+            grid: {
+              drawOnChartArea: false
+            },
+            title: {
+              display: true,
+              text: 'Total Attempts'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            mode: 'index',
+            intersect: false,
           }
         }
       }
@@ -623,7 +1018,6 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
     // Review Schedule Chart
     const scheduleData = <?php echo $reviewScheduleData; ?>;
     const scheduleCtx = document.getElementById('reviewScheduleChart').getContext('2d');
-
     const statuses = scheduleData.map(item => item.status);
     const statusCounts = scheduleData.map(item => item.count);
 
@@ -638,7 +1032,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
             'rgba(255, 206, 86, 0.7)',
             'rgba(54, 162, 235, 0.7)',
             'rgba(75, 192, 192, 0.7)',
-            'rgba(153, 102, 255, 0.7)',
+            'rgba(153, 102, 255, 0.7)'
           ],
           borderColor: 'rgba(255, 255, 255, 0.3)',
           borderWidth: 1
@@ -655,14 +1049,21 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
           tooltip: {
             callbacks: {
               label: function(context) {
-                const label = context.label || '';
+                let label = context.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed) {
+                  label += context.parsed + ' ';
+                }
                 const value = context.raw || 0;
                 const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                 const percentage = Math.round((value / total) * 100);
-                return `${label}: ${value} (${percentage}%)`;
+                return `${label} (${percentage}%)`;
               }
             }
-          }
+          },
+          cutout: '60%'
         },
         cutout: '60%'
       }
@@ -671,12 +1072,11 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
     // Study Time Distribution Chart
     const timeData = <?php echo $studyTimeData; ?>;
     const timeCtx = document.getElementById('studyTimeChart').getContext('2d');
-
-    const hours = timeData.map(item =>
-      item.hour < 12 ?
-      (item.hour === 0 ? '12 AM' : `${item.hour} AM`) :
-      (item.hour === 12 ? '12 PM' : `${item.hour - 12} PM`)
-    );
+    const hours = timeData.map(item => {
+      return item.hour < 12 ?
+        (item.hour === 0 ? '12 AM' : `${item.hour} AM`) :
+        (item.hour === 12 ? '12 PM' : `${item.hour - 12} PM`);
+    });
     const sessionCounts = timeData.map(item => item.count);
     const avgTimes = timeData.map(item => item.avgTime);
 
@@ -741,7 +1141,21 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
         }
       }
     });
+
+    // Toggle between Level and Type charts
+    document.getElementById('showLevelsBtn').addEventListener('click', function() {
+      document.getElementById('vocabLevelChartContainer').style.display = 'block';
+      document.getElementById('contentTypeChartContainer').style.display = 'none';
+      this.classList.add('active');
+      document.getElementById('showTypesBtn').classList.remove('active');
+    });
+
+    document.getElementById('showTypesBtn').addEventListener('click', function() {
+      document.getElementById('vocabLevelChartContainer').style.display = 'none';
+      document.getElementById('contentTypeChartContainer').style.display = 'block';
+      this.classList.add('active');
+      document.getElementById('showLevelsBtn').classList.remove('active');
+    });
   });
 </script>
-
 <?php include 'view/footer.php'; ?>
