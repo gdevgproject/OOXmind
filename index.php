@@ -21,19 +21,66 @@ function getTotalPages($pdo, $recordsPerPage = 10)
     return ceil($totalRecords / $recordsPerPage);
 }
 
+// Get database connection once
+$pdo = pdo_get_connection();
+
 // Get the current page from GET parameters or set default to 1
 $page = max((int) ($_GET['page'] ?? 1), 1); // Ensure the page is not less than 1
-
 $recordsPerPage = 10; // Number of items per page
 $startCount = ($page - 1) * $recordsPerPage + 1; // Calculate the starting count for display
 
-$contentData = getContentData(pdo_get_connection(), $page, $recordsPerPage);
-$totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
+$contentData = getContentData($pdo, $page, $recordsPerPage);
+$totalPages = getTotalPages($pdo, $recordsPerPage);
+
+// Helper function for safe HTML output
+function safeOutput($string)
+{
+    return htmlspecialchars($string ?? '', ENT_NOQUOTES);
+}
+
+// Generate pagination HTML
+function getPaginationHtml($page, $totalPages, $paginationRange = 2)
+{
+    $html = '';
+
+    // Previous page link
+    if ($page > 1) {
+        $html .= "<a href='?page=" . ($page - 1) . "'>«</a>";
+    } else {
+        $html .= "<a class='disabled'>«</a>";
+    }
+
+    // Page numbers
+    for ($i = max(1, $page - $paginationRange); $i <= min($totalPages, $page + $paginationRange); $i++) {
+        $activeClass = ($i == $page) ? 'active' : '';
+        $html .= "<a class='$activeClass' href='?page=$i'>$i</a>";
+    }
+
+    // Next page link
+    if ($page < $totalPages) {
+        $html .= "<a href='?page=" . ($page + 1) . "'>»</a>";
+    } else {
+        $html .= "<a class='disabled'>»</a>";
+    }
+
+    return $html;
+}
 ?>
 
-<!-- style cho form -->
 <style>
-    /* Styles cho modal */
+    :root {
+        --primary-bg: rgba(243, 240, 255, 0.9);
+        --primary-border: rgba(209, 207, 226, 0.7);
+        --btn-primary: rgba(163, 196, 243, 0.9);
+        --btn-primary-hover: rgba(111, 159, 231, 0.9);
+        --btn-danger: rgba(255, 179, 179, 0.9);
+        --btn-danger-hover: rgba(255, 128, 128, 0.9);
+        --text-color: #333;
+        --border-radius: 8px;
+        --transition-speed: 0.3s ease;
+    }
+
+    /* Modal styles */
     .modal-dialog {
         max-width: 90%;
     }
@@ -41,13 +88,13 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
     .modal-content {
         background-color: rgba(255, 255, 255, 0.7);
         padding: 20px;
-        border-radius: 8px;
+        border-radius: var(--border-radius);
         border: 1px solid rgba(255, 255, 255, 0.9);
         box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
         backdrop-filter: blur(15px);
     }
 
-    /* Form layout styles */
+    /* Form layout */
     .container-form {
         display: flex;
         flex-wrap: wrap;
@@ -66,13 +113,13 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
         gap: 10px;
     }
 
-    /* Input styles */
+    /* Inputs */
     .soft-input {
-        border: 1px solid rgba(209, 207, 226, 0.7);
-        background-color: rgba(243, 240, 255, 0.9);
-        border-radius: 8px;
+        border: 1px solid var(--primary-border);
+        background-color: var(--primary-bg);
+        border-radius: var(--border-radius);
         padding: 10px;
-        transition: background-color 0.3s ease;
+        transition: background-color var(--transition-speed);
         color: #4A4A4A;
         font-weight: bold;
     }
@@ -82,94 +129,90 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
         outline: none;
     }
 
-    /* Button styles */
+    /* Buttons */
     .btn-save,
     .btn-close,
     .custom-file-upload {
         padding: 10px 20px;
-        border-radius: 8px;
-        color: #333;
-        transition: background-color 0.3s ease;
+        border-radius: var(--border-radius);
+        color: var(--text-color);
+        transition: background-color var(--transition-speed);
     }
 
     .save-close {
         display: flex;
         justify-content: space-between;
-        align-items: end;
+        align-items: flex-end;
     }
 
     .btn-save {
-        background-color: rgba(163, 196, 243, 0.9);
+        background-color: var(--btn-primary);
         border: none;
     }
 
     .btn-save:hover {
-        background-color: rgba(111, 159, 231, 0.9);
+        background-color: var(--btn-primary-hover);
     }
 
     .btn-close {
-        background-color: rgba(255, 179, 179, 0.9);
+        background-color: var(--btn-danger);
         border: none;
     }
 
     .btn-close:hover {
-        background-color: rgba(255, 128, 128, 0.9);
+        background-color: var(--btn-danger-hover);
     }
 
-    /* Label styles */
+    /* Labels */
     label {
         font-weight: bold;
-        color: #333;
+        color: var(--text-color);
     }
 
-    /* Custom file upload button styles */
+    /* File upload */
     .custom-file-upload {
         display: inline-block;
         padding: 10px 20px;
         cursor: pointer;
-        background-color: rgba(163, 196, 243, 0.9);
-        border-radius: 8px;
-        color: #333;
+        background-color: var(--btn-primary);
+        border-radius: var(--border-radius);
+        color: var(--text-color);
         font-size: 14px;
         font-weight: bold;
-        transition: background-color 0.3s ease;
+        transition: background-color var(--transition-speed);
     }
 
     .custom-file-upload:hover {
-        background-color: rgba(111, 159, 231, 0.9);
+        background-color: var(--btn-primary-hover);
     }
 
-    /* Hide default file input */
     input[type="file"] {
         display: none;
     }
 
-    /* Upload preview styles */
+    /* Preview styles */
     .upload-preview {
         position: relative;
-        border: 2px solid rgba(209, 207, 226, 0.7);
-        background-color: rgba(243, 240, 255, 0.9);
-        border-radius: 8px;
+        border: 2px solid var(--primary-border);
+        background-color: var(--primary-bg);
+        border-radius: var(--border-radius);
         padding: 10px;
         height: 200px;
         display: flex;
         justify-content: center;
         align-items: center;
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: all var(--transition-speed);
     }
 
-    /* Preview element styles */
     .preview-box {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
         display: none;
-        /* Ẩn mặc định, sẽ hiển thị khi có tệp tải lên */
         animation: fadeIn 0.5s ease;
     }
 
-    /* Fade-in animation */
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -184,85 +227,61 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
         margin-top: 100px;
     }
 
-    /* Pagination styles */
+    /* Pagination */
     .pagination {
         display: flex;
-        justify-content: center; /* Center pagination items */
+        justify-content: center;
         margin-top: 20px;
     }
 
     .pagination a {
-        color: #333; /* Dark text color */
+        color: var(--text-color);
         padding: 8px 16px;
         text-decoration: none;
-        border-radius: 8px; /* Rounded corners */
-        border: 1px solid rgba(209, 207, 226, 0.7); /* Soft border */
-        background-color: rgba(243, 240, 255, 0.9); /* Soft background */
+        border-radius: var(--border-radius);
+        border: 1px solid var(--primary-border);
+        background-color: var(--primary-bg);
         margin: 0 4px;
-        transition: background-color 0.3s ease;
+        transition: background-color var(--transition-speed);
     }
 
     .pagination a.active {
-        background-color: rgba(163, 196, 243, 0.9); /* Active state background */
-        color: #333; /* Active state text color */
-        border: 1px solid rgba(163, 196, 243, 0.9); /* Active state border */
+        background-color: var(--btn-primary);
+        color: var(--text-color);
+        border: 1px solid var(--btn-primary);
     }
 
     .pagination a:hover:not(.active) {
-        background-color: rgba(235, 230, 255, 0.9); /* Hover state background */
+        background-color: rgba(235, 230, 255, 0.9);
     }
 
     .pagination-container {
         display: flex;
-        justify-content: center; /* Center the pagination container */
-        align-items: center; /* Vertically align items */
-        margin-top: 20px; /* Adjust top margin as needed */
-        gap: 20px; /* Spacing between button and pagination */
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
     }
 </style>
 
 <div class="mx-auto list-vocab-table text-shadow-white" style="width:90%">
     <!-- Search Bar -->
     <div class="input-group my-3">
-        <input type="text" class="input-box text-shadow-white" id="searchInput" placeholder="Search..." aria-label="Search"
-            aria-describedby="basic-addon2">
+        <input type="text" class="input-box text-shadow-white" id="searchInput"
+            placeholder="Search..." aria-label="Search">
     </div>
 
-    <div class="pagination-container" style="display:flex; justify-content: space-between; align-items: center;">
+    <div class="pagination-container">
         <!-- Add New Button -->
         <button type="button" class="custom-btn mb-3" data-toggle="modal" data-target="#addNewModal">
-            <img src="assets/add.png" alt="">
+            <img src="assets/add.png" alt="Add">
         </button>
 
         <!-- Pagination -->
         <div class="pagination" style="margin-bottom: 20px;">
-            <?php
-            $paginationRange = 2; // Number of pages to show around the current page
-
-            // Previous page link
-            if ($page > 1) {
-                echo "<a href='?page=" . ($page - 1) . "'>«</a>";
-            } else {
-                echo "<a class='disabled'>«</a>"; // Or disable it with CSS
-            }
-
-            // Page numbers
-            for ($i = max(1, $page - $paginationRange); $i <= min($totalPages, $page + $paginationRange); $i++) {
-                $activeClass = ($i == $page) ? 'active' : '';
-                echo "<a class='$activeClass' href='?page=$i'>$i</a>";
-            }
-
-            // Next page link
-            if ($page < $totalPages) {
-                echo "<a href='?page=" . ($page + 1) . "'>»</a>";
-            } else {
-                echo "<a class='disabled'>»</a>"; // Or disable it with CSS
-            }
-            ?>
+            <?php echo getPaginationHtml($page, $totalPages); ?>
         </div>
-        <div></div> <!-- Empty div to balance spacing if pagination is on the left -->
+        <div></div> <!-- Empty div to balance spacing -->
     </div>
-
 
     <!-- Content Table -->
     <table class="custom-table" id="contentTable">
@@ -282,69 +301,72 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
         </thead>
         <tbody>
             <?php
-
             $count = $startCount;
             foreach ($contentData as $row) {
                 $rowId = htmlspecialchars($row['content_id']);
-                $vocab = htmlspecialchars($row['vocab'] ?? '', ENT_NOQUOTES); // Chỉ mã hóa ký tự HTML đặc biệt, bỏ qua dấu ngoặc kép
-                $partOfSpeech = htmlspecialchars($row['part_of_speech'] ?? '', ENT_NOQUOTES);
-                $ipa = htmlspecialchars($row['ipa'] ?? '', ENT_NOQUOTES);
-                $def = htmlspecialchars($row['def'] ?? '', ENT_NOQUOTES);
-                $ex = htmlspecialchars($row['ex'] ?? '', ENT_NOQUOTES);
-                $question = htmlspecialchars($row['question'] ?? '', ENT_NOQUOTES);
-                $answer = htmlspecialchars($row['answer'] ?? '', ENT_NOQUOTES);
-                $imagePath = htmlspecialchars($row['image_path'] ?? '', ENT_NOQUOTES);
-                $videoPath = htmlspecialchars($row['video_path'] ?? '', ENT_NOQUOTES);
-                $audioPath = htmlspecialchars($row['audio_path'] ?? '', ENT_NOQUOTES);
-
-                echo "<tr>";
-                echo "<td class='text-center'>
-        <button class='custom-btn' onclick='redirectToPracticeDraft(" . json_encode($def) . ", " . json_encode($vocab) . ")'>
-            <img src='assets/homework.png' alt='Practice Draft'>
-        </button>
-        <button class='custom-btn' onclick='fillEditModal($rowId, " . json_encode($vocab) . ", " . json_encode($partOfSpeech) . ", " . json_encode($ipa) . ", " . json_encode($def) . ", " . json_encode($ex) . ", " . json_encode($question) . ", " . json_encode($answer) . ", " . json_encode($imagePath) . ", " . json_encode($videoPath) . ", " . json_encode($audioPath) . ")'>
-            <img src='assets/edit.png' alt='Edit'>
-        </button>
-        <button class='custom-btn'
-            onmousedown='startDeleteHold(" . json_encode($rowId) . ")'
-            onmouseup='endDeleteHold()'
-            onmouseleave='endDeleteHold()'
-            onclick='confirmDelete(" . json_encode($rowId) . ")'> <!-- Thêm onclick cho xác nhận xóa -->
-            <img src='assets/bin.png' alt='Delete'>
-        </button>
-    </td>";
-
-                echo "<td class='text-center'>{$count}</td>";
-                echo "<td>$vocab $partOfSpeech<br>$ipa</td>";
-                echo "<td>$def</td>";
-                echo "<td>$ex</td>";
-                echo "<td>$question</td>";
-                echo "<td>$answer</td>";
-
-                // Hiển thị ảnh
-                echo "<td>" . (!empty($imagePath) ? "<img src='$imagePath' alt='Image' style='max-width:100px; max-height:100px;' ondblclick='enlargeImage(\"$imagePath\")'>" : '') . "</td>";
-
-                // Hiển thị video
-                echo "<td>" . (!empty($videoPath) ? "<video width='150' height='100' controls><source src='$videoPath' type='video/mp4'>Your browser does not support the video tag.</video>" : '') . "</td>";
-
-                // Hiển thị audio
-                echo "<td>" . (!empty($audioPath) ? "<div class='custom-btn' style='cursor:pointer;' onclick='playAudio(\"$audioPath\")'><img src='assets/audio.png' alt='Play Audio'></div>" : '') . "</td>";
-
-                echo "</tr>";
-                $count++; // Tăng biến đếm
+                $vocab = safeOutput($row['vocab']);
+                $partOfSpeech = safeOutput($row['part_of_speech']);
+                $ipa = safeOutput($row['ipa']);
+                $def = safeOutput($row['def']);
+                $ex = safeOutput($row['ex']);
+                $question = safeOutput($row['question']);
+                $answer = safeOutput($row['answer']);
+                $imagePath = safeOutput($row['image_path']);
+                $videoPath = safeOutput($row['video_path']);
+                $audioPath = safeOutput($row['audio_path']);
+            ?>
+                <tr>
+                    <td class="text-center">
+                        <button class="custom-btn" onclick='redirectToPracticeDraft(<?= json_encode($def) ?>, <?= json_encode($vocab) ?>)'>
+                            <img src="assets/homework.png" alt="Practice Draft">
+                        </button>
+                        <button class="custom-btn" onclick='fillEditModal(<?= $rowId ?>, <?= json_encode($vocab) ?>, <?= json_encode($partOfSpeech) ?>, <?= json_encode($ipa) ?>, <?= json_encode($def) ?>, <?= json_encode($ex) ?>, <?= json_encode($question) ?>, <?= json_encode($answer) ?>, <?= json_encode($imagePath) ?>, <?= json_encode($videoPath) ?>, <?= json_encode($audioPath) ?>)'>
+                            <img src="assets/edit.png" alt="Edit">
+                        </button>
+                        <button class="custom-btn"
+                            onmousedown='startDeleteHold(<?= json_encode($rowId) ?>)'
+                            onmouseup='endDeleteHold()'
+                            onmouseleave='endDeleteHold()'
+                            onclick='confirmDelete(<?= json_encode($rowId) ?>)'>
+                            <img src="assets/bin.png" alt="Delete">
+                        </button>
+                    </td>
+                    <td class="text-center"><?= $count ?></td>
+                    <td><?= $vocab ?> <?= $partOfSpeech ?><br><?= $ipa ?></td>
+                    <td><?= $def ?></td>
+                    <td><?= $ex ?></td>
+                    <td><?= $question ?></td>
+                    <td><?= $answer ?></td>
+                    <td>
+                        <?php if (!empty($imagePath)): ?>
+                            <img src="<?= $imagePath ?>" alt="Image" style="max-width:100px; max-height:100px;" ondblclick='enlargeImage("<?= $imagePath ?>")'>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if (!empty($videoPath)): ?>
+                            <video width="150" height="100" controls>
+                                <source src="<?= $videoPath ?>" type="video/mp4">Your browser does not support the video tag.
+                            </video>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if (!empty($audioPath)): ?>
+                            <div class="custom-btn" style="cursor:pointer;" onclick='playAudio("<?= $audioPath ?>")'>
+                                <img src="assets/audio.png" alt="Play Audio">
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php
+                $count++;
             }
             ?>
         </tbody>
     </table>
-
-
 </div>
-</div>
-
 
 <!-- Image Modal -->
-<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel"
-    aria-hidden="true">
+<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -359,8 +381,6 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
     </div>
 </div>
 
-
-
 <!-- Add New Modal -->
 <div class="modal" id="addNewModal" tabindex="-1" role="dialog" aria-labelledby="addNewModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -368,15 +388,13 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
             <form action="process_add_content.php" method="post" enctype="multipart/form-data">
                 <div class="container-form">
                     <div class="left-form">
-                        <!-- Các trường thông tin khác -->
                         <div class="form-group">
                             <label for="newVocab">Vocabulary</label>
                             <input type="text" class="form-control soft-input" id="newVocab" name="newVocab">
                         </div>
                         <div class="form-group">
                             <label for="newPartOfSpeech">Part of speech</label>
-                            <input type="text" class="form-control soft-input" id="newPartOfSpeech"
-                                name="newPartOfSpeech" value="()">
+                            <input type="text" class="form-control soft-input" id="newPartOfSpeech" name="newPartOfSpeech" value="()">
                         </div>
                         <div class="form-group">
                             <label for="newIPA">IPA</label>
@@ -388,28 +406,24 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
                         </div>
                         <div class="form-group">
                             <label for="newExample">Example</label>
-                            <textarea class="form-control soft-input" id="newExample" name="newExample"
-                                rows="2"></textarea>
+                            <textarea class="form-control soft-input" id="newExample" name="newExample" rows="2"></textarea>
                         </div>
                     </div>
                     <div class="right-form">
                         <div class="form-group">
                             <label for="newQuestion">Question</label>
-                            <textarea class="form-control soft-input" id="newQuestion" name="newQuestion"
-                                rows="4"></textarea>
+                            <textarea class="form-control soft-input" id="newQuestion" name="newQuestion" rows="4"></textarea>
                         </div>
                         <div class="form-group">
                             <label for="newAnswer">Answer</label>
-                            <textarea class="form-control soft-input" id="newAnswer" name="newAnswer"
-                                rows="2"></textarea>
+                            <textarea class="form-control soft-input" id="newAnswer" name="newAnswer" rows="2"></textarea>
                         </div>
                         <div class="upload-container">
                             <div class="form-group">
                                 <label for="newImage">Image</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="newImage" name="newImage" accept="image/*"
-                                            onchange="previewFile(this, 'imagePreview')">
+                                        <input type="file" id="newImage" name="newImage" accept="image/*" onchange="previewFile(this, 'imagePreview')">
                                         Choose Image
                                     </label>
                                     <img id="imagePreview" class="preview-box" alt="Image Preview">
@@ -419,8 +433,7 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
                                 <label for="newVideo">Video</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="newVideo" name="newVideo" accept="video/*"
-                                            onchange="previewFile(this, 'videoPreview')">
+                                        <input type="file" id="newVideo" name="newVideo" accept="video/*" onchange="previewFile(this, 'videoPreview')">
                                         Choose Video
                                     </label>
                                     <video id="videoPreview" class="preview-box" controls></video>
@@ -430,8 +443,7 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
                                 <label for="newAudio">Audio</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="newAudio" name="newAudio" accept="audio/*"
-                                            onchange="previewFile(this, 'audioPreview')">
+                                        <input type="file" id="newAudio" name="newAudio" accept="audio/*" onchange="previewFile(this, 'audioPreview')">
                                         Choose Audio
                                     </label>
                                     <audio id="audioPreview" class="preview-box" controls></audio>
@@ -465,8 +477,7 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
                         </div>
                         <div class="form-group">
                             <label for="editPartOfSpeech">Part of Speech</label>
-                            <input type="text" class="form-control soft-input" id="editPartOfSpeech"
-                                name="editPartOfSpeech" value="()">
+                            <input type="text" class="form-control soft-input" id="editPartOfSpeech" name="editPartOfSpeech" value="()">
                         </div>
                         <div class="form-group">
                             <label for="editIPA">IPA</label>
@@ -478,28 +489,24 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
                         </div>
                         <div class="form-group">
                             <label for="editExample">Example</label>
-                            <textarea class="form-control soft-input" id="editExample" name="editExample"
-                                rows="2"></textarea>
+                            <textarea class="form-control soft-input" id="editExample" name="editExample" rows="2"></textarea>
                         </div>
                     </div>
                     <div class="right-form">
                         <div class="form-group">
                             <label for="editQuestion">Question</label>
-                            <textarea class="form-control soft-input" id="editQuestion" name="editQuestion"
-                                rows="4"></textarea>
+                            <textarea class="form-control soft-input" id="editQuestion" name="editQuestion" rows="4"></textarea>
                         </div>
                         <div class="form-group">
                             <label for="editAnswer">Answer</label>
-                            <textarea class="form-control soft-input" id="editAnswer" name="editAnswer"
-                                rows="2"></textarea>
+                            <textarea class="form-control soft-input" id="editAnswer" name="editAnswer" rows="2"></textarea>
                         </div>
                         <div class="upload-container">
                             <div class="form-group">
                                 <label for="editImage">Image</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="editImage" name="editImage" accept="image/*"
-                                            onchange="previewFile(this, 'editImagePreview')">
+                                        <input type="file" id="editImage" name="editImage" accept="image/*" onchange="previewFile(this, 'editImagePreview')">
                                         Choose Image
                                     </label>
                                     <img id="editImagePreview" class="preview-box" alt="Image Preview">
@@ -509,8 +516,7 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
                                 <label for="editVideo">Video</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="editVideo" name="editVideo" accept="video/*"
-                                            onchange="previewFile(this, 'editVideoPreview')">
+                                        <input type="file" id="editVideo" name="editVideo" accept="video/*" onchange="previewFile(this, 'editVideoPreview')">
                                         Choose Video
                                     </label>
                                     <video id="editVideoPreview" class="preview-box" controls></video>
@@ -520,8 +526,7 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
                                 <label for="editAudio">Audio</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="editAudio" name="editAudio" accept="audio/*"
-                                            onchange="previewFile(this, 'editAudioPreview')">
+                                        <input type="file" id="editAudio" name="editAudio" accept="audio/*" onchange="previewFile(this, 'editAudioPreview')">
                                         Choose Audio
                                     </label>
                                     <audio id="editAudioPreview" class="preview-box" controls></audio>
@@ -540,9 +545,6 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
     </div>
 </div>
 
-
-
-
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.8/dist/umd/popper.min.js"></script>
@@ -551,6 +553,7 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
 <script>
     // Lấy URL hiện tại và đặt vào input ẩn
     document.getElementById('currentUrl').value = window.location.href;
+
     function previewFile(input, previewId) {
         const file = input.files[0];
         if (file) {
@@ -596,18 +599,18 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
     }
 
     let searchTimer;
-    document.getElementById("searchInput").addEventListener("input", function () {
+    document.getElementById("searchInput").addEventListener("input", function() {
         const searchValue = this.value.trim().toLowerCase();
         clearTimeout(searchTimer);
 
-        if (searchValue) {  // Chỉ tìm kiếm khi có giá trị
+        if (searchValue) { // Chỉ tìm kiếm khi có giá trị
             searchTimer = setTimeout(() => searchContent(searchValue), 60);
         }
     });
 
     function searchContent(value) {
         const xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function () {
+        xhttp.onreadystatechange = function() {
             if (this.readyState === 4 && this.status === 200) {
                 document.getElementById("contentTable").innerHTML = this.responseText;
                 highlightSearchResults(value);
@@ -620,7 +623,7 @@ $totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
 
     function attachPracticeDraftEvent() {
         const contentTable = document.getElementById("contentTable");
-        contentTable.addEventListener("click", function (event) {
+        contentTable.addEventListener("click", function(event) {
             const button = event.target.closest("button.custom-btn");
             const img = event.target.closest("img");
 
