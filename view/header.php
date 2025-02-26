@@ -789,7 +789,3 @@ $randomImage = $images[array_rand($images)];
             </ul>
         </nav>
     </header>
-
-    
-
-    <body>
