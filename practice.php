@@ -1,30 +1,42 @@
 <?php
 include 'view/header.php';
 
-date_default_timezone_set('Asia/Ho_Chi_Minh');
+// Initialize session and retrieve vocabulary content
+function initPracticeSession()
+{
+    // Set timezone for consistent time calculations
+    date_default_timezone_set('Asia/Ho_Chi_Minh');
+    $currentDateTime = date("Y-m-d H:i:s");
 
-$currentDateTime = date("Y-m-d H:i:s");
-$conn = pdo_get_connection();
+    // Connect to database and retrieve content for practice
+    $conn = pdo_get_connection();
+    $sql = "SELECT * FROM content WHERE next_review <= :currentDateTime ORDER BY create_time DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
+    $stmt->execute();
+    $contentData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// $sql = "SELECT * FROM content WHERE next_review <= :currentDateTime ORDER BY level ASC";
-$sql = "SELECT * FROM content WHERE next_review <= :currentDateTime ORDER BY create_time DESC";
+    // Redirect if no content to practice
+    if (empty($contentData)) {
+        header('Location: home.php');
+        exit;
+    }
 
-$stmt = $conn->prepare($sql);
-$stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
-$stmt->execute();
-$contentData = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-if (empty($contentData)) {
-    header('Location: home.php');
-    exit;
+    return [
+        'contentData' => $contentData,
+        'totalVocabulary' => count($contentData)
+    ];
 }
 
-$totalVocabulary = count($contentData);
+// Get practice data
+$practiceData = initPracticeSession();
+$contentData = $practiceData['contentData'];
+$totalVocabulary = $practiceData['totalVocabulary'];
 ?>
 
-
+<!-- Main CSS Styles -->
 <style>
+    /* Result display styles */
     #correctList li {
         color: green;
     }
@@ -37,6 +49,7 @@ $totalVocabulary = count($contentData);
         color: red;
     }
 
+    /* Vocabulary card styles */
     .pseudo-class-level {
         position: relative;
     }
@@ -70,11 +83,8 @@ $totalVocabulary = count($contentData);
         border: 2px solid rgba(255, 255, 255, .2);
         box-shadow: 0 0 10px rgba(0, 0, 0, .2);
     }
-</style>
 
-<!-- style cho form -->
-<style>
-    /* Styles cho modal */
+    /* Modal styles */
     .modal-dialog {
         max-width: 90%;
     }
@@ -107,7 +117,7 @@ $totalVocabulary = count($contentData);
         gap: 20px;
     }
 
-    /* Input styles */
+    /* Form element styles */
     .soft-input {
         border: 1px solid rgba(209, 207, 226, 0.7);
         background-color: rgba(255, 255, 255, 0.9);
@@ -163,7 +173,7 @@ $totalVocabulary = count($contentData);
         color: #333;
     }
 
-    /* Custom file upload button styles */
+    /* File upload styles */
     .custom-file-upload {
         display: inline-block;
         padding: 10px 20px;
@@ -180,7 +190,6 @@ $totalVocabulary = count($contentData);
         background-color: rgba(111, 159, 231, 0.9);
     }
 
-    /* Hide default file input */
     input[type="file"] {
         display: none;
     }
@@ -200,17 +209,15 @@ $totalVocabulary = count($contentData);
         transition: all 0.3s ease;
     }
 
-    /* Preview element styles */
     .preview-box {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
         display: none;
-        /* Ẩn mặc định, sẽ hiển thị khi có tệp tải lên */
+        /* Hidden by default, shown when file uploaded */
         animation: fadeIn 0.5s ease;
     }
 
-    /* Fade-in animation */
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -221,25 +228,39 @@ $totalVocabulary = count($contentData);
         }
     }
 </style>
+
+<!-- Main Vocabulary Practice Section -->
 <div class="mt-5">
     <div class="row justify-content-center pseudo-class-level text-shadow-white">
         <div class="col-md-8">
+            <!-- Level badge and edit button -->
             <span id="levelBadge" class="level-badge"></span>
             <button id="editThisVocab" class="edit-this-vocab text-shadow-white" onclick="editCurrentVocab()">Edit</button>
+
+            <!-- Main vocabulary card -->
             <div class="custom-div text-center">
+                <!-- Definition display -->
                 <h3 class="my-3 text-justify" id="definition"></h3>
+
+                <!-- Vocabulary input -->
                 <div class="input-group">
-                    <input type="text" class="input-box text-shadow-white" id="vocabularyInput" placeholder="Vocabulary"
-                        autocomplete="off">
+                    <input type="text" class="input-box text-shadow-white" id="vocabularyInput" placeholder="Vocabulary" autocomplete="off">
                 </div>
+
+                <!-- Part of speech input -->
                 <div class="input-group mt-3">
-                    <input type="text" class="input-box text-shadow-white" id="partOfSpeechInput" placeholder="Part of Speech"
-                        autocomplete="off">
+                    <input type="text" class="input-box text-shadow-white" id="partOfSpeechInput" placeholder="Part of Speech" autocomplete="off">
                 </div>
+
+                <!-- Question display -->
                 <h3 class="my-3 text-justify" id="question"></h3>
+
+                <!-- Answer input -->
                 <div class="input-group">
                     <input type="text" class="input-box text-shadow-white" id="answerInput" placeholder="Answer" autocomplete="off">
                 </div>
+
+                <!-- Submit button -->
                 <div class="text-center mt-5">
                     <button type="button" class="custom-big-btn text-shadow-white" onclick="checkAnswer()">CHECK</button>
                 </div>
@@ -248,41 +269,53 @@ $totalVocabulary = count($contentData);
     </div>
 </div>
 
-
-<!-- checked -->
+<!-- Result Modal -->
 <div class="modal" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-custom" role="document">
         <div class="modal-content" style="max-height: 1000px;">
             <div class="row justify-content-between">
+                <!-- Result content - left side -->
                 <div class="col-sm-6">
+                    <!-- Result status message -->
                     <p id="resultMessage"></p>
+
+                    <!-- Vocabulary and part of speech -->
                     <p><strong><span id="resultVocab"></span></strong><span id="resultPartOfSpeech"></span></p>
-                    <!-- Sử dụng d-flex của Bootstrap để căn chỉnh các phần tử -->
+
+                    <!-- Audio controls and IPA -->
                     <div class="d-flex align-items-center mb-3">
+                        <!-- Slow audio button -->
                         <div class="custom-btn mr-2">
-                            <img id="resultSlowAudioIcon" src="assets/slowaudio.png" class="custom-btn"
-                                alt="Play Slow Audio">
+                            <img id="resultSlowAudioIcon" src="assets/slowaudio.png" class="custom-btn" alt="Play Slow Audio">
                             <audio id="resultAudio" class="d-none"></audio>
                         </div>
+
+                        <!-- Normal audio button -->
                         <div class="custom-btn mr-2">
-                            <img id="resultAudioIcon" src="assets/audio.png" class="custom-btn" alt="Play Audio"
-                                onclick="playAudio()">
-                            <audio id="resultAudio" class="d-none"></audio>
+                            <img id="resultAudioIcon" src="assets/audio.png" class="custom-btn" alt="Play Audio" onclick="playAudio()">
                         </div>
-                        <p class="mb-0"><span id="resultIPA"></span></p> <!-- mb-0 loại bỏ margin dưới cùng -->
+
+                        <!-- IPA pronunciation -->
+                        <p class="mb-0"><span id="resultIPA"></span></p>
                     </div>
 
+                    <!-- Definition, example, question and answer -->
                     <p><span id="resultDef"></span></p>
-
                     <p><span id="resultEx"></span></p>
                     <p><strong><span id="resultQuestion"></span></strong></p>
                     <p><span id="resultAnswer"></span></p>
+
+                    <!-- Video player -->
                     <video id="resultVideo" class="w-100 d-none mt-2" controls></video>
                 </div>
+
+                <!-- Result content - right side (image) -->
                 <div class="col-sm-6">
-                    <img id="resultImage" class="img-fluid d-none" alt="Result Image" stlye="height: 375px;">
+                    <img id="resultImage" class="img-fluid d-none" alt="Result Image" style="height: 375px;">
                 </div>
             </div>
+
+            <!-- Continue button -->
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" onclick="nextContent()">Continue</button>
             </div>
@@ -290,7 +323,7 @@ $totalVocabulary = count($contentData);
     </div>
 </div>
 
-<!-- Modal Phóng To Hình Ảnh -->
+<!-- Image Enlarge Modal -->
 <div class="modal" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -301,28 +334,34 @@ $totalVocabulary = count($contentData);
                 </button>
             </div>
             <div class="modal-body">
-                <img id="enlargedImage" src="" class="img-fluid" alt="Hình Ảnh Phóng To">
+                <img id="enlargedImage" src="" class="img-fluid" alt="Enlarged Image">
             </div>
         </div>
     </div>
 </div>
 
-<!-- Thống kê -->
-<div class="modal" id="statisticsModal" tabindex="-1" role="dialog" aria-labelledby="statisticsModalLabel"
-    aria-hidden="true">
+<!-- Statistics Modal -->
+<div class="modal" id="statisticsModal" tabindex="-1" role="dialog" aria-labelledby="statisticsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-custom-2" role="document">
         <div class="modal-content">
             <div class="modal-body">
-                <p class="text-center"><span class="text-success" id="correctCount"></span> / <span
-                        id="totalCount"></span></p>
+                <!-- Summary statistics -->
+                <p class="text-center">
+                    <span class="text-success" id="correctCount"></span> / <span id="totalCount"></span>
+                </p>
                 <p class="text-center">Total Time: <span id="totalTime"></span></p>
+
+                <!-- Detailed results -->
                 <div class="d-flex align-items-center justify-content-between mb-3">
+                    <!-- Incorrect answers list -->
                     <div class="mr-2">
                         <div id="incorrectListContainer">
                             <h5 class="text-danger text-center">Incorrect Answers</h5>
                             <ul id="incorrectList" class="list-unstyled"></ul>
                         </div>
                     </div>
+
+                    <!-- Correct answers list -->
                     <div class="mr-2">
                         <div id="correctListContainer">
                             <h5 class="text-success text-center">Correct Answers</h5>
@@ -331,6 +370,8 @@ $totalVocabulary = count($contentData);
                     </div>
                 </div>
             </div>
+
+            <!-- Continue button -->
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" onclick="redirectToHome()">CONTINUE</button>
             </div>
@@ -338,79 +379,95 @@ $totalVocabulary = count($contentData);
     </div>
 </div>
 
-
-<!-- Edit Modal -->
+<!-- Edit Vocabulary Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form action="process_edit_content.php" method="post" enctype="multipart/form-data">
+                <!-- Hidden fields -->
                 <input type="hidden" id="editId" name="editId" value="">
                 <input type="hidden" id="currentUrl" name="currentUrl" value="">
+
                 <div class="container-form">
+                    <!-- Left column - Text fields -->
                     <div class="left-form">
+                        <!-- Vocabulary field -->
                         <div class="form-group">
                             <label for="editVocab">Vocabulary</label>
                             <input type="text" class="form-control soft-input" id="editVocab" name="editVocab">
                         </div>
+
+                        <!-- Part of speech field -->
                         <div class="form-group">
                             <label for="editPartOfSpeech">Part of Speech</label>
-                            <input type="text" class="form-control soft-input" id="editPartOfSpeech"
-                                name="editPartOfSpeech" value="()">
+                            <input type="text" class="form-control soft-input" id="editPartOfSpeech" name="editPartOfSpeech" value="()">
                         </div>
+
+                        <!-- IPA field -->
                         <div class="form-group">
                             <label for="editIPA">IPA</label>
                             <input type="text" class="form-control soft-input" id="editIPA" name="editIPA">
                         </div>
+
+                        <!-- Definition field -->
                         <div class="form-group">
                             <label for="editDef">Definition</label>
                             <textarea class="form-control soft-input" id="editDef" name="editDef" rows="4"></textarea>
                         </div>
+
+                        <!-- Example field -->
                         <div class="form-group">
                             <label for="editExample">Example</label>
-                            <textarea class="form-control soft-input" id="editExample" name="editExample"
-                                rows="2"></textarea>
+                            <textarea class="form-control soft-input" id="editExample" name="editExample" rows="2"></textarea>
                         </div>
                     </div>
+
+                    <!-- Right column - Q&A and media -->
                     <div class="right-form">
+                        <!-- Question field -->
                         <div class="form-group">
                             <label for="editQuestion">Question</label>
-                            <textarea class="form-control soft-input" id="editQuestion" name="editQuestion"
-                                rows="4"></textarea>
+                            <textarea class="form-control soft-input" id="editQuestion" name="editQuestion" rows="4"></textarea>
                         </div>
+
+                        <!-- Answer field -->
                         <div class="form-group">
                             <label for="editAnswer">Answer</label>
-                            <textarea class="form-control soft-input" id="editAnswer" name="editAnswer"
-                                rows="2"></textarea>
+                            <textarea class="form-control soft-input" id="editAnswer" name="editAnswer" rows="2"></textarea>
                         </div>
+
+                        <!-- Media upload section -->
                         <div class="upload-container">
+                            <!-- Image upload -->
                             <div class="form-group">
                                 <label for="editImage">Image</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="editImage" name="editImage" accept="image/*"
-                                            onchange="previewFile(this, 'editImagePreview')">
+                                        <input type="file" id="editImage" name="editImage" accept="image/*" onchange="previewFile(this, 'editImagePreview')">
                                         Choose Image
                                     </label>
                                     <img id="editImagePreview" class="preview-box" alt="Image Preview">
                                 </div>
                             </div>
+
+                            <!-- Video upload -->
                             <div class="form-group">
                                 <label for="editVideo">Video</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="editVideo" name="editVideo" accept="video/*"
-                                            onchange="previewFile(this, 'editVideoPreview')">
+                                        <input type="file" id="editVideo" name="editVideo" accept="video/*" onchange="previewFile(this, 'editVideoPreview')">
                                         Choose Video
                                     </label>
                                     <video id="editVideoPreview" class="preview-box" controls></video>
                                 </div>
                             </div>
+
+                            <!-- Audio upload -->
                             <div class="form-group">
                                 <label for="editAudio">Audio</label>
                                 <div class="upload-preview">
                                     <label class="custom-file-upload">
-                                        <input type="file" id="editAudio" name="editAudio" accept="audio/*"
-                                            onchange="previewFile(this, 'editAudioPreview')">
+                                        <input type="file" id="editAudio" name="editAudio" accept="audio/*" onchange="previewFile(this, 'editAudioPreview')">
                                         Choose Audio
                                     </label>
                                     <audio id="editAudioPreview" class="preview-box" controls></audio>
@@ -419,6 +476,8 @@ $totalVocabulary = count($contentData);
                         </div>
                     </div>
                 </div>
+
+                <!-- Form control buttons -->
                 <div class="text-center save-close">
                     <button type="button" class="btn btn-close" data-dismiss="modal">Close</button>
                     <h6>Enhance your skills with our resources!</h6>
@@ -429,7 +488,7 @@ $totalVocabulary = count($contentData);
     </div>
 </div>
 
-
+<!-- JavaScript Code - Kept as is according to instructions -->
 <script>
     let totalResponseTime = 0;
     let currentIndex = 0;
