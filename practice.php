@@ -102,7 +102,7 @@ $totalVocabulary = count($contentData);
     .upload-container {
         display: flex;
         justify-content: space-between;
-        gap: 10px;
+        gap: 20px;
     }
 
     /* Input styles */
@@ -449,6 +449,29 @@ $totalVocabulary = count($contentData);
     // Lấy URL hiện tại và đặt vào input ẩn
     document.getElementById('currentUrl').value = window.location.href;
 
+    let englishVoices = []; // Mảng lưu trữ các giọng đọc tiếng Anh
+    let currentVoiceIndex = 0; // Biến theo dõi index giọng đọc hiện tại
+
+    function populateEnglishVoices() {
+        if (speechSynthesis.getVoices().length > 0) {
+            englishVoices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('en'));
+        } else {
+            // Nếu danh sách giọng đọc chưa sẵn sàng, thử lại sau một chút
+            setTimeout(populateEnglishVoices, 100);
+        }
+    }
+
+    populateEnglishVoices(); // Gọi hàm này khi trang load để lấy danh sách giọng đọc
+
+    function getRandomEnglishVoice() {
+        if (englishVoices.length > 0) {
+            currentVoiceIndex = Math.floor(Math.random() * englishVoices.length);
+            return englishVoices[currentVoiceIndex];
+        }
+        return null;
+    }
+
+
     function displayContent() {
         var currentContent = contentData[currentIndex];
         var definition = document.getElementById('definition');
@@ -645,12 +668,12 @@ $totalVocabulary = count($contentData);
 
         if (currentContent.audio_path) {
             document.getElementById('resultAudio').src = currentContent.audio_path;
-            // Icons audio luôn hiển thị, không cần xử lý class d-none ở đây nữa
+            // Icons audio luôn hiển thị
             // Đặt lại tốc độ phát âm thanh và tự động phát
             document.getElementById('resultAudio').playbackRate = 1.0;
             document.getElementById('resultAudio').play();
         } else {
-            // Icons audio luôn hiển thị, không cần xử lý class d-none ở đây nữa
+            // Icons audio luôn hiển thị
         }
 
         // Tự động phát âm thanh TTS sau khi hiển thị modal kết quả (nếu không có audio file và vocab không rỗng)
@@ -778,13 +801,19 @@ $totalVocabulary = count($contentData);
         const vocabText = contentData[currentIndex].vocab;
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(vocabText);
-            utterance.rate = rate;
+            utterance.text = vocabText; // Set text explicitly
+            utterance.rate = rate; // Set rate for slow/normal speed
+            let selectedVoice = getRandomEnglishVoice(); // Get random English voice
+            if (selectedVoice) {
+                utterance.voice = selectedVoice; // Set voice to utterance
+            }
             speechSynthesis.speak(utterance);
         } else {
             console.error("Trình duyệt của bạn không hỗ trợ Text-to-Speech API");
             alert("Tính năng đọc từ vựng không được hỗ trợ trên trình duyệt này.");
         }
     }
+
 
     // Gán hàm cho nút slowaudio
     var slowAudioButton = document.getElementById('resultSlowAudioIcon');
@@ -1002,7 +1031,7 @@ $totalVocabulary = count($contentData);
             } else if (document.webkitExitFullscreen) { // Chrome, Safari & Opera
                 document.webkitExitFullscreen();
             } else if (document.msExitFullscreen) { // IE/Edge
-                document.msExitFullscreen();
+                document.msExitfullscreen();
             }
         }
     }
