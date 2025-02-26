@@ -547,7 +547,7 @@ $totalVocabulary = count($contentData);
         // Reset audio source and state for new vocabulary
         var resultAudio = document.getElementById('resultAudio');
         resultAudio.src = ''; // Clear previous audio source
-        resultAudio.pause();  // Ensure any playing audio is stopped
+        resultAudio.pause(); // Ensure any playing audio is stopped
 
         if (currentContent.audio_path) {
             resultAudio.src = currentContent.audio_path;
@@ -696,7 +696,7 @@ $totalVocabulary = count($contentData);
 
         // Gửi thông tin cập nhật đến máy chủ
         var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function () {
+        xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 var response = JSON.parse(this.responseText);
                 if (!response.success) {
@@ -854,7 +854,7 @@ $totalVocabulary = count($contentData);
 
             var correctList = document.getElementById('correctList');
             correctList.innerHTML = ''; // Xóa danh sách cũ
-            correctItems.forEach(function (item) {
+            correctItems.forEach(function(item) {
                 var li = document.createElement('li');
                 li.innerText = item.vocab + " | " + item.question;
                 li.style.color = 'green'; // Thêm màu sắc cho các từ đúng
@@ -863,7 +863,7 @@ $totalVocabulary = count($contentData);
 
             var incorrectList = document.getElementById('incorrectList');
             incorrectList.innerHTML = ''; // Xóa danh sách cũ
-            incorrectItems.forEach(function (item) {
+            incorrectItems.forEach(function(item) {
                 var li = document.createElement('li');
                 li.innerText = item.vocab + " | " + item.question;
                 li.style.color = 'red'; // Thêm màu sắc cho các từ sai
@@ -873,7 +873,7 @@ $totalVocabulary = count($contentData);
             showStatisticsModal(); // Hiển thị thống kê và ẩn các khối khác
         } else {
             // Đặt timeout để chắc chắn modal đã đóng và giao diện được cập nhật
-            setTimeout(function () {
+            setTimeout(function() {
                 displayContent();
             }, 100); // Độ trễ 100ms, có thể điều chỉnh nếu cần
             $('#resultModal').modal('hide');
@@ -884,7 +884,7 @@ $totalVocabulary = count($contentData);
     // Hiển thị nội dung ban đầu
     displayContent();
 
-    document.addEventListener('keydown', function (event) {
+    document.addEventListener('keydown', function(event) {
         if (event.code === 'Enter') {
             enterFullScreenMode();
             event.preventDefault(); // Ngăn chặn hành động mặc định của phím Enter
@@ -1088,7 +1088,7 @@ $totalVocabulary = count($contentData);
         }
     }
 
-    document.getElementById('resultImage').addEventListener('dblclick', function () {
+    document.getElementById('resultImage').addEventListener('dblclick', function() {
         var src = this.src; // Lấy đường dẫn của hình ảnh
         document.getElementById('enlargedImage').src = src; // Đặt đường dẫn này cho hình ảnh trong modal
         $('#imageModal').modal('show'); // Hiển thị modal
@@ -1132,7 +1132,7 @@ $totalVocabulary = count($contentData);
     }
 
     // Đặt vị trí của marker-divider khi trang tải lần đầu
-    window.onload = function () {
+    window.onload = function() {
         const progressBar = document.getElementById('progressBar');
         const progressBarWidth = progressBar.offsetWidth;
         const progressContainerWidth = progressBar.parentElement.offsetWidth;

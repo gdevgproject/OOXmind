@@ -20,4 +20,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     pdo_execute("UPDATE activity_log SET close_time = ? WHERE activity_date = CURDATE()", $close_time);
   }
 }
-?>
