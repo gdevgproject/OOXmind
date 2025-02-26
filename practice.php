@@ -482,7 +482,6 @@ $totalVocabulary = count($contentData);
         var imageContainer = document.getElementById('imageContainer');
         var levelBadge = document.getElementById('levelBadge');
         var resultAudioIcon = document.getElementById('resultAudioIcon');
-        var resultSlowAudioIcon = document.getElementById('resultSlowAudioIcon');
 
         levelBadge.textContent = currentContent.level;
 
@@ -545,6 +544,14 @@ $totalVocabulary = count($contentData);
             resultSlowAudioIcon.classList.remove('d-none');
         }
 
+        // Reset audio source and state for new vocabulary
+        var resultAudio = document.getElementById('resultAudio');
+        resultAudio.src = ''; // Clear previous audio source
+        resultAudio.pause();  // Ensure any playing audio is stopped
+
+        if (currentContent.audio_path) {
+            resultAudio.src = currentContent.audio_path;
+        }
 
         startTimer();
     }
@@ -776,23 +783,27 @@ $totalVocabulary = count($contentData);
 
     function playAudio() {
         var audio = document.getElementById('resultAudio');
-        if (audio.src) {
+        var currentContent = contentData[currentIndex];
+
+        if (currentContent.audio_path) {
             audio.currentTime = 0;
             audio.playbackRate = 1;
             audio.play();
         } else {
-            speakVocabulary(1.0); // Phát TTS nếu không có file âm thanh
+            speakVocabulary(1.0);
         }
     }
 
     function playSlowAudio() {
         var audio = document.getElementById('resultAudio');
-        if (audio.src) {
+        var currentContent = contentData[currentIndex];
+
+        if (currentContent.audio_path) {
             audio.currentTime = 0;
             audio.playbackRate = 0.5;
             audio.play();
         } else {
-            speakVocabulary(0.7); // Phát TTS chậm nếu không có file âm thanh
+            speakVocabulary(0.7);
         }
     }
 
