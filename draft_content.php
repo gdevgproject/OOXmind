@@ -27,6 +27,7 @@ $recordsPerPage = 10; // Number of items per page
 $startCount = ($page - 1) * $recordsPerPage + 1; // Calculate the starting count for display
 
 $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage);
+$totalPages = getTotalPages(pdo_get_connection(), $recordsPerPage);
 ?>
 
 <!-- style cho form -->
@@ -180,19 +181,85 @@ $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage
     .list-vocab-table {
         margin-top: 100px;
     }
+
+    /* Pagination styles */
+    .pagination {
+        display: flex;
+        justify-content: center; /* Center pagination items */
+        margin-top: 20px;
+    }
+
+    .pagination a {
+        color: #333; /* Dark text color */
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 8px; /* Rounded corners */
+        border: 1px solid rgba(209, 207, 226, 0.7); /* Soft border */
+        background-color: rgba(243, 240, 255, 0.9); /* Soft background */
+        margin: 0 4px;
+        transition: background-color 0.3s ease;
+    }
+
+    .pagination a.active {
+        background-color: rgba(163, 196, 243, 0.9); /* Active state background */
+        color: #333; /* Active state text color */
+        border: 1px solid rgba(163, 196, 243, 0.9); /* Active state border */
+    }
+
+    .pagination a:hover:not(.active) {
+        background-color: rgba(235, 230, 255, 0.9); /* Hover state background */
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center; /* Center the pagination container */
+        align-items: center; /* Vertically align items */
+        margin-top: 20px; /* Adjust top margin as needed */
+        gap: 20px; /* Spacing between button and pagination */
+    }
 </style>
 
 <div class="mx-auto list-vocab-table" style="width:90%">
     <!-- Search Bar -->
     <div class="input-group my-3">
-        <input type="text" class="input-box" id="searchInput" placeholder="Search..." aria-label="Search"
+        <input type="text" class="input-box text-shadow-white" id="searchInput" placeholder="Search..." aria-label="Search"
             aria-describedby="basic-addon2">
     </div>
 
-    <!-- Add New Button -->
-    <button type="button" class="custom-btn mb-3" data-toggle="modal" data-target="#addNewModal">
-        <img src="assets/add.png" alt="">
-    </button>
+    <div class="pagination-container" style="display:flex; justify-content: space-between; align-items: center;">
+        <!-- Add New Button -->
+        <button type="button" class="custom-btn mb-3" data-toggle="modal" data-target="#addNewModal">
+            <img src="assets/add.png" alt="">
+        </button>
+
+        <!-- Pagination -->
+        <div class="pagination" style="margin-bottom: 20px;">
+            <?php
+            $paginationRange = 2; // Number of pages to show around the current page
+
+            // Previous page link
+            if ($page > 1) {
+                echo "<a href='?page=" . ($page - 1) . "'>«</a>";
+            } else {
+                echo "<a class='disabled'>«</a>"; // Or disable it with CSS
+            }
+
+            // Page numbers
+            for ($i = max(1, $page - $paginationRange); $i <= min($totalPages, $page + $paginationRange); $i++) {
+                $activeClass = ($i == $page) ? 'active' : '';
+                echo "<a class='$activeClass' href='?page=$i'>$i</a>";
+            }
+
+            // Next page link
+            if ($page < $totalPages) {
+                echo "<a href='?page=" . ($page + 1) . "'>»</a>";
+            } else {
+                echo "<a class='disabled'>»</a>"; // Or disable it with CSS
+            }
+            ?>
+        </div>
+        <div></div> <!-- Empty div to balance spacing if pagination is on the left -->
+    </div>
 
     <!-- Content Table -->
     <table class="custom-table" id="contentTable">
@@ -213,7 +280,7 @@ $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage
         <tbody>
             <?php
             require_once 'model/pdo.php'; // Include PDO model if not already included
-            
+
             $count = $startCount;
             foreach ($contentData as $row) {
                 $rowId = htmlspecialchars($row['draft_id']);
@@ -277,14 +344,8 @@ $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage
         </tbody>
     </table>
 
-    <div class="text-center font-weight-bold h5">
-        <?php
-        $totalPages = getTotalPages(pdo_get_connection());
-        for ($i = 1; $i <= $totalPages; $i++) {
-            echo "<a class='custom-btn' href='?page=$i'>$i</a> ";
-        }
-        ?>
-    </div>
+
+</div>
 </div>
 
 
@@ -295,7 +356,7 @@ $contentData = getdraft_contentData(pdo_get_connection(), $page, $recordsPerPage
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                    <span aria-hidden="true">×</span>
                 </button>
             </div>
             <div class="modal-body">
