@@ -50,12 +50,12 @@ function getVocabVsQuestionDistribution($conn)
 
 function getTopPerformingVocab($conn)
 {
-  $sql = "SELECT vocab, def, level, correct_count, incorrect_count,
+  $sql = "SELECT vocab, def, question, level, correct_count, incorrect_count, 
             (correct_count / (correct_count + incorrect_count)) * 100 as accuracy_rate
-            FROM content
+            FROM content 
             WHERE (correct_count + incorrect_count) > 3
             ORDER BY accuracy_rate DESC, level DESC
-            LIMIT 10";
+            LIMIT 20"; // Increased limit to show more items
   $stmt = $conn->prepare($sql);
   $stmt->execute();
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -63,12 +63,12 @@ function getTopPerformingVocab($conn)
 
 function getLowestPerformingVocab($conn)
 {
-  $sql = "SELECT vocab, def, level, correct_count, incorrect_count,
+  $sql = "SELECT vocab, def, question, level, correct_count, incorrect_count, 
             (correct_count / (correct_count + incorrect_count)) * 100 as accuracy_rate
-            FROM content
+            FROM content 
             WHERE (correct_count + incorrect_count) > 3
             ORDER BY accuracy_rate ASC, level DESC
-            LIMIT 10";
+            LIMIT 20"; // Increased limit to show more items
   $stmt = $conn->prepare($sql);
   $stmt->execute();
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -631,7 +631,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
           <h5 class="mb-0">Top Performing Items</h5>
         </div>
         <div class="card-body">
-          <div class="table-responsive">
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
             <table class="table table-dark table-striped">
               <thead>
                 <tr>
@@ -645,7 +645,22 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
               <tbody>
                 <?php foreach ($topVocabs as $vocab): ?>
                   <tr>
-                    <td><?php echo htmlspecialchars($vocab['vocab'] ? $vocab['vocab'] : '(Question)'); ?></td>
+                    <td>
+                      <?php
+                      if (!empty($vocab['vocab'])) {
+                        echo htmlspecialchars($vocab['vocab']);
+                      } else {
+                        // For questions, display a truncated version of the question
+                        $question = $vocab['question'];
+                        echo !empty($question) ?
+                          htmlspecialchars(mb_strlen($question) > 50 ? mb_substr($question, 0, 47) . '...' : $question) :
+                          '(Question)';
+                      }
+                      ?>
+                      <span class="d-block small text-muted">
+                        <?php echo !empty($vocab['def']) ? htmlspecialchars(mb_substr($vocab['def'], 0, 50)) . (mb_strlen($vocab['def']) > 50 ? '...' : '') : ''; ?>
+                      </span>
+                    </td>
                     <td><?php echo $vocab['level']; ?></td>
                     <td><?php echo $vocab['correct_count']; ?></td>
                     <td><?php echo $vocab['incorrect_count']; ?></td>
@@ -664,7 +679,7 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
           <h5 class="mb-0">Items Needing Attention</h5>
         </div>
         <div class="card-body">
-          <div class="table-responsive">
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
             <table class="table table-dark table-striped">
               <thead>
                 <tr>
@@ -678,7 +693,22 @@ $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100
               <tbody>
                 <?php foreach ($lowestVocabs as $vocab): ?>
                   <tr>
-                    <td><?php echo htmlspecialchars($vocab['vocab'] ? $vocab['vocab'] : '(Question)'); ?></td>
+                    <td>
+                      <?php
+                      if (!empty($vocab['vocab'])) {
+                        echo htmlspecialchars($vocab['vocab']);
+                      } else {
+                        // For questions, display a truncated version of the question
+                        $question = $vocab['question'];
+                        echo !empty($question) ?
+                          htmlspecialchars(mb_strlen($question) > 50 ? mb_substr($question, 0, 47) . '...' : $question) :
+                          '(Question)';
+                      }
+                      ?>
+                      <span class="d-block small text-muted">
+                        <?php echo !empty($vocab['def']) ? htmlspecialchars(mb_substr($vocab['def'], 0, 50)) . (mb_strlen($vocab['def']) > 50 ? '...' : '') : ''; ?>
+                      </span>
+                    </td>
                     <td><?php echo $vocab['level']; ?></td>
                     <td><?php echo $vocab['correct_count']; ?></td>
                     <td><?php echo $vocab['incorrect_count']; ?></td>
