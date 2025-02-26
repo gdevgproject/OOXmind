@@ -6,7 +6,9 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 $currentDateTime = date("Y-m-d H:i:s");
 $conn = pdo_get_connection();
 
-$sql = "SELECT * FROM content WHERE next_review <= :currentDateTime ORDER BY level ASC";
+// $sql = "SELECT * FROM content WHERE next_review <= :currentDateTime ORDER BY level ASC";
+$sql = "SELECT * FROM content WHERE next_review <= :currentDateTime ORDER BY create_time DESC";
+
 $stmt = $conn->prepare($sql);
 $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
 $stmt->execute();
