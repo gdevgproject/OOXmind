@@ -258,12 +258,12 @@ $totalVocabulary = count($contentData);
                     <!-- Sử dụng d-flex của Bootstrap để căn chỉnh các phần tử -->
                     <div class="d-flex align-items-center mb-3">
                         <div class="custom-btn mr-2">
-                            <img id="resultSlowAudioIcon" src="assets/slowaudio.png" class="custom-btn d-none"
+                            <img id="resultSlowAudioIcon" src="assets/slowaudio.png" class="custom-btn"
                                 alt="Play Slow Audio">
                             <audio id="resultAudio" class="d-none"></audio>
                         </div>
                         <div class="custom-btn mr-2">
-                            <img id="resultAudioIcon" src="assets/audio.png" class="custom-btn d-none" alt="Play Audio"
+                            <img id="resultAudioIcon" src="assets/audio.png" class="custom-btn" alt="Play Audio"
                                 onclick="playAudio()">
                             <audio id="resultAudio" class="d-none"></audio>
                         </div>
@@ -295,7 +295,7 @@ $totalVocabulary = count($contentData);
             <div class="modal-header">
                 <h5 class="modal-title" id="imageModalLabel">PICTURE</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                    <span aria-hidden="true">×</span>
                 </button>
             </div>
             <div class="modal-body">
@@ -458,6 +458,8 @@ $totalVocabulary = count($contentData);
         var answerInput = document.getElementById('answerInput');
         var imageContainer = document.getElementById('imageContainer');
         var levelBadge = document.getElementById('levelBadge');
+        var resultAudioIcon = document.getElementById('resultAudioIcon');
+        var resultSlowAudioIcon = document.getElementById('resultSlowAudioIcon');
 
         levelBadge.textContent = currentContent.level;
 
@@ -511,6 +513,16 @@ $totalVocabulary = count($contentData);
             vocabInput.focus();
         }
 
+        // Ẩn/hiện nút audio dựa trên trường vocab
+        if (currentContent.vocab === null || currentContent.vocab === "") {
+            resultAudioIcon.classList.add('d-none');
+            resultSlowAudioIcon.classList.add('d-none');
+        } else {
+            resultAudioIcon.classList.remove('d-none');
+            resultSlowAudioIcon.classList.remove('d-none');
+        }
+
+
         startTimer();
     }
 
@@ -520,6 +532,8 @@ $totalVocabulary = count($contentData);
         var userPartOfSpeech = document.getElementById('partOfSpeechInput').value.trim().toLowerCase();
         var userAnswer = document.getElementById('answerInput').value.trim(); // Giữ nguyên định dạng cho đáp án
         var currentContent = contentData[currentIndex];
+        var resultAudioIcon = document.getElementById('resultAudioIcon');
+
 
         // Loại bỏ dấu chấm chỉ từ đáp án người dùng nhập vào ô Vocabulary
         userVocabulary = userVocabulary.replace(/\./g, '');
@@ -631,16 +645,19 @@ $totalVocabulary = count($contentData);
 
         if (currentContent.audio_path) {
             document.getElementById('resultAudio').src = currentContent.audio_path;
-            document.getElementById('resultAudioIcon').classList.remove('d-none');
-            document.getElementById('resultSlowAudioIcon').classList.remove('d-none'); // Hiển thị nút slowaudio
-
+            // Icons audio luôn hiển thị, không cần xử lý class d-none ở đây nữa
             // Đặt lại tốc độ phát âm thanh và tự động phát
             document.getElementById('resultAudio').playbackRate = 1.0;
             document.getElementById('resultAudio').play();
         } else {
-            document.getElementById('resultAudioIcon').classList.add('d-none');
-            document.getElementById('resultSlowAudioIcon').classList.add('d-none'); // Ẩn nút slowaudio
+            // Icons audio luôn hiển thị, không cần xử lý class d-none ở đây nữa
         }
+
+        // Tự động phát âm thanh TTS sau khi hiển thị modal kết quả (nếu không có audio file và vocab không rỗng)
+        if (!currentContent.audio_path && currentContent.vocab && currentContent.vocab.trim() !== "") {
+            speakVocabulary();
+        }
+
 
         document.getElementById('resultMessage').innerText = resultMessage;
 
@@ -737,18 +754,35 @@ $totalVocabulary = count($contentData);
     function playAudio() {
         var audio = document.getElementById('resultAudio');
         if (audio.src) {
-            audio.currentTime = 0; // Đặt lại thời gian âm thanh về đầu
+            audio.currentTime = 0;
             audio.playbackRate = 1;
             audio.play();
+        } else {
+            speakVocabulary(1.0); // Phát TTS nếu không có file âm thanh
         }
     }
 
     function playSlowAudio() {
         var audio = document.getElementById('resultAudio');
         if (audio.src) {
-            audio.currentTime = 0; // Đặt lại thời gian âm thanh về đầu
-            audio.playbackRate = 0.5; // Thiết lập tốc độ phát là 0.5
+            audio.currentTime = 0;
+            audio.playbackRate = 0.5;
             audio.play();
+        } else {
+            speakVocabulary(0.7); // Phát TTS chậm nếu không có file âm thanh
+        }
+    }
+
+    function speakVocabulary(rate = 1.0) {
+        speechSynthesis.cancel(); // Hủy bỏ bất kỳ TTS đang chạy trước đó để tránh xung đột
+        const vocabText = contentData[currentIndex].vocab;
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(vocabText);
+            utterance.rate = rate;
+            speechSynthesis.speak(utterance);
+        } else {
+            console.error("Trình duyệt của bạn không hỗ trợ Text-to-Speech API");
+            alert("Tính năng đọc từ vựng không được hỗ trợ trên trình duyệt này.");
         }
     }
 
