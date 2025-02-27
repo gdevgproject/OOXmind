@@ -75,6 +75,7 @@ function updateRecoveryState($conn, $contentId, $isRecovery)
 
 /**
  * Tính toán khoảng thời gian cho lần ôn tập tiếp theo dựa trên level
+ * Đo lường thực tế từ lv 8 trở xuống, từ lv 9 trở lên là phỏng đoán, cần xem xét tính hiệu quả để điều chỉnh
  */
 function calculateNextReviewInterval($level)
 {
@@ -86,14 +87,18 @@ function calculateNextReviewInterval($level)
         5 => "71 HOUR",
         6 => "359 HOUR",
         7 => "1103 HOUR",
-        8 => "3407 HOUR"
+        8 => "3407 HOUR",
+        9 => "8567 HOUR",
+        10 => "21418 HOUR",
+        11 => "43800 HOUR"
     ];
 
     if ($level <= 0) {
         // Thay vì giữ nguyên thời gian ôn tập cuối, đặt ôn tập sau 30 phút
         return "30 MINUTE";
-    } elseif ($level > 8) {
-        return "8567 HOUR";
+    } elseif ($level > 11) {
+        // Sử dụng thời gian của level cao nhất cho các level vượt quá 11
+        return "43800 HOUR"; // Khoảng 5 năm
     } elseif (isset($intervals[$level])) {
         return $intervals[$level];
     }
