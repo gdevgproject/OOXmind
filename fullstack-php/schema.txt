@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th5 10, 2025 lúc 06:04 PM
+-- Thời gian đã tạo: Th5 10, 2025 lúc 08:04 PM
 -- Phiên bản máy phục vụ: 8.0.30
 -- Phiên bản PHP: 8.1.10
 
@@ -28,15 +28,18 @@ USE `openyourself`;
 --
 -- Cấu trúc bảng cho bảng `activity_log`
 --
+-- Tạo: Th10 03, 2024 lúc 02:02 PM
+--
 
 DROP TABLE IF EXISTS `activity_log`;
-CREATE TABLE `activity_log` (
-  `log_id` int NOT NULL,
+CREATE TABLE IF NOT EXISTS `activity_log` (
+  `log_id` int NOT NULL AUTO_INCREMENT,
   `activity_date` date NOT NULL,
   `vocab_reviewed_count` int DEFAULT '0',
   `total_time_spent` int DEFAULT '0',
   `open_time` time DEFAULT NULL,
-  `close_time` time DEFAULT NULL
+  `close_time` time DEFAULT NULL,
+  PRIMARY KEY (`log_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -44,10 +47,12 @@ CREATE TABLE `activity_log` (
 --
 -- Cấu trúc bảng cho bảng `content`
 --
+-- Tạo: Th5 10, 2025 lúc 07:26 PM
+--
 
 DROP TABLE IF EXISTS `content`;
-CREATE TABLE `content` (
-  `content_id` int NOT NULL,
+CREATE TABLE IF NOT EXISTS `content` (
+  `content_id` int NOT NULL AUTO_INCREMENT,
   `vocab` varchar(255) DEFAULT NULL,
   `part_of_speech` varchar(255) DEFAULT NULL,
   `ipa` varchar(255) DEFAULT NULL,
@@ -66,7 +71,8 @@ CREATE TABLE `content` (
   `video_path` varchar(255) DEFAULT NULL,
   `response_time` int DEFAULT '0',
   `is_recovery` tinyint(1) DEFAULT '0',
-  `is_active` tinyint(1) NOT NULL DEFAULT '0'
+  `is_active` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`content_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -74,57 +80,16 @@ CREATE TABLE `content` (
 --
 -- Cấu trúc bảng cho bảng `count`
 --
+-- Tạo: Th1 16, 2024 lúc 02:28 PM
+--
 
 DROP TABLE IF EXISTS `count`;
-CREATE TABLE `count` (
-  `count_id` int NOT NULL,
+CREATE TABLE IF NOT EXISTS `count` (
+  `count_id` int NOT NULL AUTO_INCREMENT,
   `count_name` varchar(255) NOT NULL,
-  `count` int NOT NULL DEFAULT '0'
+  `count` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`count_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Chỉ mục cho các bảng đã đổ
---
-
---
--- Chỉ mục cho bảng `activity_log`
---
-ALTER TABLE `activity_log`
-  ADD PRIMARY KEY (`log_id`);
-
---
--- Chỉ mục cho bảng `content`
---
-ALTER TABLE `content`
-  ADD PRIMARY KEY (`content_id`);
-
---
--- Chỉ mục cho bảng `count`
---
-ALTER TABLE `count`
-  ADD PRIMARY KEY (`count_id`);
-
---
--- AUTO_INCREMENT cho các bảng đã đổ
---
-
---
--- AUTO_INCREMENT cho bảng `activity_log`
---
-ALTER TABLE `activity_log`
-  MODIFY `log_id` int NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT cho bảng `content`
---
-ALTER TABLE `content`
-  MODIFY `content_id` int NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT cho bảng `count`
---
-ALTER TABLE `count`
-  MODIFY `count_id` int NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
