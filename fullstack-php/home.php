@@ -324,6 +324,8 @@ $colorIndex = 6;
 
     const data = <?php echo $jsonData; ?>;
 
+    // The jsonData variable is already filtered for active content in header.php
+
     // Sắp xếp lại dữ liệu từ cấp độ cao nhất đến thấp nhất
     data.sort((a, b) => a.level - b.level);
 

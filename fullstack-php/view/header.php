@@ -5,7 +5,7 @@ $currentDateTime = date("Y-m-d H:i:s");
 
 function getCountNextReview($conn, $currentDateTime)
 {
-    $sql = "SELECT COUNT(*) FROM content WHERE next_review <= :currentDateTime AND next_review IS NOT NULL";
+    $sql = "SELECT COUNT(*) FROM content WHERE next_review <= :currentDateTime AND next_review IS NOT NULL AND is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
     $stmt->execute();
@@ -14,7 +14,7 @@ function getCountNextReview($conn, $currentDateTime)
 
 function getTotalVocabCount($conn)
 {
-    $sql = "SELECT COUNT(*) FROM content";
+    $sql = "SELECT COUNT(*) FROM content WHERE is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     return $stmt->fetchColumn();
@@ -30,7 +30,7 @@ function gettotalCountPracticeDraft($conn)
 
 function homeGetUpcomingWords($conn, $currentDateTime)
 {
-    $sql = "SELECT * FROM content WHERE next_review IS NOT NULL AND next_review > :currentDateTime ORDER BY next_review ASC LIMIT 5";
+    $sql = "SELECT * FROM content WHERE next_review IS NOT NULL AND next_review > :currentDateTime AND is_active = 1 ORDER BY next_review ASC LIMIT 5";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
     $stmt->execute();
@@ -39,8 +39,8 @@ function homeGetUpcomingWords($conn, $currentDateTime)
 
 function homeGetCounts($conn)
 {
-    $sqlVocabCount = "SELECT COUNT(*) FROM content WHERE vocab IS NOT NULL AND vocab != ''";
-    $sqlOtherCount = "SELECT COUNT(*) FROM content WHERE vocab IS NULL OR vocab = ''";
+    $sqlVocabCount = "SELECT COUNT(*) FROM content WHERE vocab IS NOT NULL AND vocab != '' AND is_active = 1";
+    $sqlOtherCount = "SELECT COUNT(*) FROM content WHERE (vocab IS NULL OR vocab = '') AND is_active = 1";
 
     $stmtVocab = $conn->prepare($sqlVocabCount);
     $stmtVocab->execute();
@@ -55,7 +55,7 @@ function homeGetCounts($conn)
 
 function homeGetCount($conn, $currentDateTime)
 {
-    $sqlCount = "SELECT COUNT(*) as count FROM content WHERE next_review IS NOT NULL AND next_review <= :currentDateTime";
+    $sqlCount = "SELECT COUNT(*) as count FROM content WHERE next_review IS NOT NULL AND next_review <= :currentDateTime AND is_active = 1";
     $stmtCount = $conn->prepare($sqlCount);
     $stmtCount->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
     $stmtCount->execute();
@@ -75,7 +75,7 @@ function getFolderSize($folderPath)
 
 function getOldestCreateTime($conn)
 {
-    $sql = "SELECT MIN(create_time) FROM content";
+    $sql = "SELECT MIN(create_time) FROM content WHERE is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     return $stmt->fetchColumn();
@@ -84,13 +84,13 @@ function getOldestCreateTime($conn)
 function getTotalStats($conn)
 {
     // Tính tổng level của từ vựng
-    $sqlLevels = "SELECT SUM(level) FROM content";
+    $sqlLevels = "SELECT SUM(level) FROM content WHERE is_active = 1";
     $stmtLevels = $conn->prepare($sqlLevels);
     $stmtLevels->execute();
     $totalLevels = $stmtLevels->fetchColumn();
 
     // Tính tổng số từ vựng
-    $sqlVocabCount = "SELECT COUNT(*) FROM content";
+    $sqlVocabCount = "SELECT COUNT(*) FROM content WHERE is_active = 1";
     $stmtVocabCount = $conn->prepare($sqlVocabCount);
     $stmtVocabCount->execute();
     $totalVocab = $stmtVocabCount->fetchColumn();
@@ -141,7 +141,7 @@ function getVocabReviewedCountToday($conn)
 function getVocabCreatedCountToday($conn)
 {
     $currentDate = date("Y-m-d");
-    $sql = "SELECT COUNT(*) FROM content WHERE DATE(create_time) = :currentDate";
+    $sql = "SELECT COUNT(*) FROM content WHERE DATE(create_time) = :currentDate AND is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':currentDate', $currentDate, PDO::PARAM_STR);
     $stmt->execute();
@@ -179,7 +179,7 @@ function getColorBasedOnCount($count, $isTodayCount = false)
 function getTodayVocabCount($conn)
 {
     $today = date('Y-m-d');
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM content WHERE DATE(create_time) = :today");
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM content WHERE DATE(create_time) = :today AND is_active = 1");
     $stmt->execute(['today' => $today]);
     return $stmt->fetchColumn();
 }
@@ -202,7 +202,7 @@ try {
     $conn = pdo_get_connection();
 
     // Truy vấn lấy 7 cấp độ cao nhất cùng với số lượng từ vựng của mỗi cấp độ
-    $sql = "SELECT level, COUNT(*) as vocab_count FROM content GROUP BY level ORDER BY level DESC LIMIT 7";
+    $sql = "SELECT level, COUNT(*) as vocab_count FROM content WHERE is_active = 1 GROUP BY level ORDER BY level DESC LIMIT 7";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute();

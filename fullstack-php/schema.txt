@@ -3,12 +3,13 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th5 09, 2025 lúc 02:38 AM
+-- Thời gian đã tạo: Th5 10, 2025 lúc 06:04 PM
 -- Phiên bản máy phục vụ: 8.0.30
 -- Phiên bản PHP: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
+SET time_zone = "+00:00";
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -29,15 +30,14 @@ USE `openyourself`;
 --
 
 DROP TABLE IF EXISTS `activity_log`;
-CREATE TABLE IF NOT EXISTS `activity_log` (
-  `log_id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `activity_log` (
+  `log_id` int NOT NULL,
   `activity_date` date NOT NULL,
   `vocab_reviewed_count` int DEFAULT '0',
   `total_time_spent` int DEFAULT '0',
   `open_time` time DEFAULT NULL,
-  `close_time` time DEFAULT NULL,
-  PRIMARY KEY (`log_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=141 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `close_time` time DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS `activity_log` (
 --
 
 DROP TABLE IF EXISTS `content`;
-CREATE TABLE IF NOT EXISTS `content` (
-  `content_id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `content` (
+  `content_id` int NOT NULL,
   `vocab` varchar(255) DEFAULT NULL,
   `part_of_speech` varchar(255) DEFAULT NULL,
   `ipa` varchar(255) DEFAULT NULL,
@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS `content` (
   `video_path` varchar(255) DEFAULT NULL,
   `response_time` int DEFAULT '0',
   `is_recovery` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`content_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2695 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `is_active` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -76,37 +76,55 @@ CREATE TABLE IF NOT EXISTS `content` (
 --
 
 DROP TABLE IF EXISTS `count`;
-CREATE TABLE IF NOT EXISTS `count` (
-  `count_id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `count` (
+  `count_id` int NOT NULL,
   `count_name` varchar(255) NOT NULL,
-  `count` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`count_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
+  `count` int NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Cấu trúc bảng cho bảng `draft_content`
+-- Chỉ mục cho các bảng đã đổ
 --
 
-DROP TABLE IF EXISTS `draft_content`;
-CREATE TABLE IF NOT EXISTS `draft_content` (
-  `draft_id` int NOT NULL AUTO_INCREMENT,
-  `vocab` varchar(255) DEFAULT NULL,
-  `part_of_speech` varchar(255) DEFAULT NULL,
-  `ipa` varchar(255) DEFAULT NULL,
-  `def` text,
-  `ex` text,
-  `question` text,
-  `answer` text,
-  `create_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `image_path` varchar(255) DEFAULT NULL,
-  `audio_path` varchar(255) DEFAULT NULL,
-  `video_path` varchar(255) DEFAULT NULL,
-  `accepted` int DEFAULT '0',
-  PRIMARY KEY (`draft_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=535 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+--
+-- Chỉ mục cho bảng `activity_log`
+--
+ALTER TABLE `activity_log`
+  ADD PRIMARY KEY (`log_id`);
 
+--
+-- Chỉ mục cho bảng `content`
+--
+ALTER TABLE `content`
+  ADD PRIMARY KEY (`content_id`);
+
+--
+-- Chỉ mục cho bảng `count`
+--
+ALTER TABLE `count`
+  ADD PRIMARY KEY (`count_id`);
+
+--
+-- AUTO_INCREMENT cho các bảng đã đổ
+--
+
+--
+-- AUTO_INCREMENT cho bảng `activity_log`
+--
+ALTER TABLE `activity_log`
+  MODIFY `log_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `content`
+--
+ALTER TABLE `content`
+  MODIFY `content_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `count`
+--
+ALTER TABLE `count`
+  MODIFY `count_id` int NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
