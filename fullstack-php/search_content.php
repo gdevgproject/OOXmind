@@ -48,6 +48,46 @@ if (isset($_GET['q'])) {
         </thead>
         <tbody>";
 
+    // Add CSS for active/inactive styles
+    echo "
+    <style>
+        tr.active-vocab {
+            background-color: rgba(164, 231, 176, 0.3);
+            border-left: 4px solid #4CAF50;
+        }
+
+        tr.active-vocab:hover {
+            background-color: rgba(164, 231, 176, 0.5);
+        }
+
+        tr.inactive-vocab {
+            background-color: rgba(231, 164, 164, 0.2);
+            border-left: 4px solid #F44336;
+            opacity: 0.8;
+        }
+
+        tr.inactive-vocab:hover {
+            background-color: rgba(231, 164, 164, 0.3);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-active {
+            background-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.8);
+        }
+
+        .status-inactive {
+            background-color: #F44336;
+        }
+    </style>";
+
     $count = 1;
     $resultsFound = false; // Variable to track if results are found
 
@@ -99,7 +139,10 @@ function isExactMatch($row, $searchValue)
 
 function echoRow($row, &$count)
 {
-    echo "<tr>";
+    $isActive = (int)$row['is_active'];
+    $rowClass = $isActive ? 'active-vocab' : 'inactive-vocab';
+
+    echo "<tr class='$rowClass'>";
     echo "<td>
         <button class='custom-btn text-center' data-def='" . htmlspecialchars($row['def']) . "' data-vocab='" . htmlspecialchars($row['vocab']) . "'>
             <img src='assets/homework.png' alt='Practice Draft'>
@@ -122,7 +165,9 @@ function echoRow($row, &$count)
     </td>";
 
     echo "<td>{$count}</td>";
-    echo "<td>" . htmlspecialchars($row['vocab']) . " " . htmlspecialchars($row['part_of_speech']) . "<br>" . htmlspecialchars($row['ipa']) . "</td>";
+    echo "<td>
+        <span class='status-indicator " . ($isActive ? 'status-active' : 'status-inactive') . "'></span>
+        " . htmlspecialchars($row['vocab']) . " " . htmlspecialchars($row['part_of_speech']) . "<br>" . htmlspecialchars($row['ipa']) . "</td>";
     echo "<td>" . htmlspecialchars($row['def']) . "</td>";
     echo "<td>" . htmlspecialchars($row['ex']) . "</td>";
     echo "<td>" . htmlspecialchars($row['question']) . "</td>";

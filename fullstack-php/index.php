@@ -261,6 +261,44 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
         align-items: center;
         margin-top: 20px;
     }
+
+    /* Active and Inactive Vocabulary Styling */
+    tr.active-vocab {
+        background-color: rgba(164, 231, 176, 0.3);
+        border-left: 4px solid #4CAF50;
+    }
+
+    tr.active-vocab:hover {
+        background-color: rgba(164, 231, 176, 0.5);
+    }
+
+    tr.inactive-vocab {
+        background-color: rgba(231, 164, 164, 0.2);
+        border-left: 4px solid #F44336;
+        opacity: 0.8;
+    }
+
+    tr.inactive-vocab:hover {
+        background-color: rgba(231, 164, 164, 0.3);
+    }
+
+    /* Active status indicator */
+    .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+    .status-active {
+        background-color: #4CAF50;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.8);
+    }
+
+    .status-inactive {
+        background-color: #F44336;
+    }
 </style>
 
 <div class="mx-auto list-vocab-table text-shadow-white" style="width:90%">
@@ -315,8 +353,9 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
                 $videoPath = safeOutput($row['video_path']);
                 $audioPath = safeOutput($row['audio_path']);
                 $isActive = (int)$row['is_active']; // Get is_active status as integer
+                $rowClass = $isActive ? 'active-vocab' : 'inactive-vocab'; // Set row class based on is_active
             ?>
-                <tr>
+                <tr class="<?= $rowClass ?>">
                     <td class="text-center">
                         <button class="custom-btn" onclick='redirectToPracticeDraft(<?= json_encode($def) ?>, <?= json_encode($vocab) ?>)'>
                             <img src="assets/homework.png" alt="Practice Draft">
@@ -333,7 +372,10 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
                         </button>
                     </td>
                     <td class="text-center"><?= $count ?></td>
-                    <td><?= $vocab ?> <?= $partOfSpeech ?><br><?= $ipa ?></td>
+                    <td>
+                        <span class="status-indicator <?= $isActive ? 'status-active' : 'status-inactive' ?>"></span>
+                        <?= $vocab ?> <?= $partOfSpeech ?><br><?= $ipa ?>
+                    </td>
                     <td><?= $def ?></td>
                     <td><?= $ex ?></td>
                     <td><?= $question ?></td>
