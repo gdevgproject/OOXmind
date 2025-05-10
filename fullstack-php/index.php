@@ -314,13 +314,14 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
                 $imagePath = safeOutput($row['image_path']);
                 $videoPath = safeOutput($row['video_path']);
                 $audioPath = safeOutput($row['audio_path']);
+                $isActive = (int)$row['is_active']; // Get is_active status as integer
             ?>
                 <tr>
                     <td class="text-center">
                         <button class="custom-btn" onclick='redirectToPracticeDraft(<?= json_encode($def) ?>, <?= json_encode($vocab) ?>)'>
                             <img src="assets/homework.png" alt="Practice Draft">
                         </button>
-                        <button class="custom-btn" onclick='fillEditModal(<?= $rowId ?>, <?= json_encode($vocab) ?>, <?= json_encode($partOfSpeech) ?>, <?= json_encode($ipa) ?>, <?= json_encode($def) ?>, <?= json_encode($ex) ?>, <?= json_encode($question) ?>, <?= json_encode($answer) ?>, <?= json_encode($imagePath) ?>, <?= json_encode($videoPath) ?>, <?= json_encode($audioPath) ?>)'>
+                        <button class="custom-btn" onclick='fillEditModal(<?= $rowId ?>, <?= json_encode($vocab) ?>, <?= json_encode($partOfSpeech) ?>, <?= json_encode($ipa) ?>, <?= json_encode($def) ?>, <?= json_encode($ex) ?>, <?= json_encode($question) ?>, <?= json_encode($answer) ?>, <?= json_encode($imagePath) ?>, <?= json_encode($videoPath) ?>, <?= json_encode($audioPath) ?>, <?= $isActive ?>)'>
                             <img src="assets/edit.png" alt="Edit">
                         </button>
                         <button class="custom-btn"
@@ -494,6 +495,10 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
                         <div class="form-group">
                             <label for="editExample">Example</label>
                             <textarea class="form-control soft-input" id="editExample" name="editExample" rows="2"></textarea>
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="editIsActive" name="editIsActive">
+                            <label class="form-check-label" for="editIsActive">Active (visible in app)</label>
                         </div>
                     </div>
                     <div class="right-form">
@@ -670,7 +675,7 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
         return textArea.value;
     }
 
-    function fillEditModal(id, vocab, partOfSpeech, ipa, def, ex, question, answer, imagePath, videoPath, audioPath) {
+    function fillEditModal(id, vocab, partOfSpeech, ipa, def, ex, question, answer, imagePath, videoPath, audioPath, isActive = 0) {
         document.getElementById('editId').value = id;
         document.getElementById('editVocab').value = decodeHTMLEntities(vocab);
         document.getElementById('editPartOfSpeech').value = decodeHTMLEntities(partOfSpeech);
@@ -680,7 +685,10 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
         document.getElementById('editQuestion').value = decodeHTMLEntities(question);
         document.getElementById('editAnswer').value = decodeHTMLEntities(answer);
 
-        // Hiển thị bản xem trước nếu có đường dẫn
+        // Set the active checkbox state
+        document.getElementById('editIsActive').checked = (isActive === 1);
+
+        // Display file previews if available
         displayFilePreview(imagePath, 'editImagePreview');
         displayFilePreview(videoPath, 'editVideoPreview');
         displayFilePreview(audioPath, 'editAudioPreview');

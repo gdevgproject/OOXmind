@@ -19,6 +19,7 @@ if (isset($_POST['update'])) {
     $newExample = $_POST['editExample'];
     $newQuestion = $_POST['editQuestion'];
     $newAnswer = $_POST['editAnswer'];
+    $isActive = isset($_POST['editIsActive']) ? 1 : 0;  // Check if the checkbox was checked
     // Nhận URL hiện tại từ form
     $currentUrl = $_POST['currentUrl'];
 
@@ -57,9 +58,9 @@ if (isset($_POST['update'])) {
         move_uploaded_file($_FILES['editAudio']['tmp_name'], $newAudioPath);
     }
 
-    // Cập nhật cơ sở dữ liệu
-    $stmt = $pdo->prepare("UPDATE content SET vocab=?, part_of_speech=?, ipa=?, def=?, ex=?, question=?, answer=?, image_path=?, video_path=?, audio_path=? WHERE content_id=?");
-    $stmt->execute([$newVocab, $newPartOfSpeech, $newIPA, $newDef, $newExample, $newQuestion, $newAnswer, $newImagePath, $newVideoPath, $newAudioPath, $id]);
+    // Cập nhật cơ sở dữ liệu, including is_active field
+    $stmt = $pdo->prepare("UPDATE content SET vocab=?, part_of_speech=?, ipa=?, def=?, ex=?, question=?, answer=?, image_path=?, video_path=?, audio_path=?, is_active=? WHERE content_id=?");
+    $stmt->execute([$newVocab, $newPartOfSpeech, $newIPA, $newDef, $newExample, $newQuestion, $newAnswer, $newImagePath, $newVideoPath, $newAudioPath, $isActive, $id]);
 
     // Chuyển hướng sau khi cập nhật về URL ban đầu
     header("Location: " . $currentUrl);

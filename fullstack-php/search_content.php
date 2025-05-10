@@ -115,7 +115,8 @@ function echoRow($row, &$count)
             " . json_encode(htmlspecialchars($row['answer']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ",
             " . json_encode(htmlspecialchars($row['image_path']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ",
             " . json_encode(htmlspecialchars($row['video_path']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ",
-            " . json_encode(htmlspecialchars($row['audio_path']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . "
+            " . json_encode(htmlspecialchars($row['audio_path']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ",
+            " . json_encode((int)$row['is_active']) . "
             )' class='custom-btn text-center'><img src='assets/edit.png' alt='Edit'></button>
         <button class='custom-btn text-center' onclick='deleteContent({$row['content_id']})'><img src='assets/bin.png' alt='Delete'></button>
     </td>";
