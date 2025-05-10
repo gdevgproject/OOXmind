@@ -408,6 +408,10 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
                             <label for="newExample">Example</label>
                             <textarea class="form-control soft-input" id="newExample" name="newExample" rows="2"></textarea>
                         </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="newIsActive" name="newIsActive" checked>
+                            <label class="form-check-label" for="newIsActive">Active (visible in app)</label>
+                        </div>
                     </div>
                     <div class="right-form">
                         <div class="form-group">
