@@ -20,14 +20,6 @@ function getTotalVocabCount($conn)
     return $stmt->fetchColumn();
 }
 
-function getTotalDraftCount($conn)
-{
-    $sql = "SELECT COUNT(*) FROM draft_content";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchColumn();
-}
-
 function gettotalCountPracticeDraft($conn)
 {
     $sql = "SELECT `count` FROM `count` WHERE `count_name` = 'count_draft'";
@@ -136,7 +128,8 @@ function initializeActivityLog()
     return $existingLog['total_time_spent']; // Return total_time_spent if record exists
 }
 
-function getVocabReviewedCountToday($conn) {
+function getVocabReviewedCountToday($conn)
+{
     $currentDate = date("Y-m-d");
     $sql = "SELECT vocab_reviewed_count FROM activity_log WHERE activity_date = :currentDate";
     $stmt = $conn->prepare($sql);
@@ -145,7 +138,8 @@ function getVocabReviewedCountToday($conn) {
     return $stmt->fetchColumn();
 }
 
-function getVocabCreatedCountToday($conn) {
+function getVocabCreatedCountToday($conn)
+{
     $currentDate = date("Y-m-d");
     $sql = "SELECT COUNT(*) FROM content WHERE DATE(create_time) = :currentDate";
     $stmt = $conn->prepare($sql);
@@ -154,30 +148,31 @@ function getVocabCreatedCountToday($conn) {
     return $stmt->fetchColumn();
 }
 
-function getColorBasedOnCount($count, $isTodayCount = false) {
-        if ($count < 10) {
-            return '#e57373'; // Đỏ nhạt
-        } elseif ($count < 20) {
-            return '#ff8a65'; // Cam đậm nhạt
-        } elseif ($count < 30) {
-            return '#ffb74d'; // Cam nhạt
-        } elseif ($count < 40) {
-            return '#ffd54f'; // Vàng đậm
-        } elseif ($count < 50) {
-            return '#fff176'; // Vàng nhạt
-        } elseif ($count < 60) {
-            return '#aed581'; // Xanh lục đậm
-        } elseif ($count < 70) {
-            return '#81c784'; // Xanh lục nhạt
-        } elseif ($count < 80) {
-            return '#4dd0e1'; // Xanh ngọc nhạt
-        } elseif ($count < 90) {
-            return '#64b5f6'; // Xanh dương nhạt
-        } elseif ($count < 100) {
-            return '#ce93d8'; // Tím đậm nhạt 
-        } else {
-            return '#ba68c8'; // Tím nhạt
-        }
+function getColorBasedOnCount($count, $isTodayCount = false)
+{
+    if ($count < 10) {
+        return '#e57373'; // Đỏ nhạt
+    } elseif ($count < 20) {
+        return '#ff8a65'; // Cam đậm nhạt
+    } elseif ($count < 30) {
+        return '#ffb74d'; // Cam nhạt
+    } elseif ($count < 40) {
+        return '#ffd54f'; // Vàng đậm
+    } elseif ($count < 50) {
+        return '#fff176'; // Vàng nhạt
+    } elseif ($count < 60) {
+        return '#aed581'; // Xanh lục đậm
+    } elseif ($count < 70) {
+        return '#81c784'; // Xanh lục nhạt
+    } elseif ($count < 80) {
+        return '#4dd0e1'; // Xanh ngọc nhạt
+    } elseif ($count < 90) {
+        return '#64b5f6'; // Xanh dương nhạt
+    } elseif ($count < 100) {
+        return '#ce93d8'; // Tím đậm nhạt 
+    } else {
+        return '#ba68c8'; // Tím nhạt
+    }
 }
 
 // Hàm lấy số lượng từ vựng hôm nay
@@ -226,7 +221,6 @@ try {
 $conn = pdo_get_connection();
 $countNextReview = getCountNextReview($conn, $currentDateTime);
 $totalVocabCount = getTotalVocabCount($conn);
-$totalDraftCount = getTotalDraftCount($conn);
 $totalCountPracticeDraft = gettotalCountPracticeDraft($conn);
 $upcomingWords = homeGetUpcomingWords($conn, $currentDateTime);
 // Lấy số lượng từ vựng và khác
@@ -345,7 +339,8 @@ $randomImage = $images[array_rand($images)];
             z-index: -1;
             transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
             animation: animateImage 40s infinite alternate;
-            will-change: transform; /* Optimize performance */
+            will-change: transform;
+            /* Optimize performance */
             /* filter: brightness(0.85); */
         }
 
@@ -357,15 +352,19 @@ $randomImage = $images[array_rand($images)];
             0% {
                 transform: scale(1) translate(0, 0);
             }
+
             25% {
                 transform: scale(1.05) translate(10px, -10px);
             }
+
             50% {
                 transform: scale(1.1) translate(-10px, 10px) rotate(2deg);
             }
+
             75% {
                 transform: scale(1.05) translate(10px, 10px);
             }
+
             100% {
                 transform: scale(1) translate(0, 0) rotate(0deg);
             }
@@ -379,10 +378,12 @@ $randomImage = $images[array_rand($images)];
             top: 0;
             left: 0;
             height: 11px;
-            background: rgba(44, 62, 80, 0.5);  /* Soft dark blue-gray with 80% opacity */
+            background: rgba(44, 62, 80, 0.5);
+            /* Soft dark blue-gray with 80% opacity */
             overflow: hidden;
             position: relative;
-            border: 1px solid #34495e;  /* Slightly lighter dark blue-gray */
+            border: 1px solid #34495e;
+            /* Slightly lighter dark blue-gray */
 
         }
 
@@ -484,8 +485,8 @@ $randomImage = $images[array_rand($images)];
     <script src="./sql/d3.v6.min.js"></script>
     <script defer src="./sql/jquery-3.5.1.slim.min.js"></script>
     <script defer src="./sql/bootstrap.min.js"></script>
-    <script defer >
-        document.addEventListener('DOMContentLoaded', function () {
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
             var images = <?php echo json_encode($images); ?>;
             var imageElement = document.getElementById('myImage');
             var currentImageIndex = 0;
@@ -493,7 +494,7 @@ $randomImage = $images[array_rand($images)];
             function changeImageWithTransition() {
                 var newImage = images[currentImageIndex];
                 imageElement.classList.add('transitioning');
-                setTimeout(function () {
+                setTimeout(function() {
                     imageElement.src = newImage;
                     imageElement.classList.remove('transitioning');
                     currentImageIndex++;
@@ -506,17 +507,15 @@ $randomImage = $images[array_rand($images)];
             setInterval(changeImageWithTransition, 10000);
         });
 
-        window.addEventListener('scroll', function () {
+        window.addEventListener('scroll', function() {
             var scrolled = window.pageYOffset;
             var image = document.getElementById('myImage');
             var rate = scrolled * -0.2; // Giảm tốc độ để tránh cảm giác chóng mặt
             image.style.transform = 'translateY(' + rate + 'px)';
         });
-
-
     </script>
     <script defer>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const audio = document.getElementById('backgroundMusic');
             const toggleMusicButton = document.getElementById('toggle-music');
             const toggleMusicIcon = document.getElementById('toggle-music-icon');
@@ -532,14 +531,14 @@ $randomImage = $images[array_rand($images)];
                 audio.pause();
                 toggleMusicIcon.src = 'assets/mute.png'; // Set to mute icon
             } else {
-                audio.play().catch(() => { }); // Handle potential play errors
+                audio.play().catch(() => {}); // Handle potential play errors
                 toggleMusicIcon.src = 'assets/audio.png'; // Set to sound icon
             }
 
             // Toggle music on button click
-            toggleMusicButton.addEventListener('click', function () {
+            toggleMusicButton.addEventListener('click', function() {
                 if (audio.paused) {
-                    audio.play().catch(() => { }); // Handle potential play errors
+                    audio.play().catch(() => {}); // Handle potential play errors
                     toggleMusicIcon.src = 'assets/audio.png'; // Set to sound icon
                     localStorage.setItem('musicEnabled', 'true');
                 } else {
@@ -550,19 +549,19 @@ $randomImage = $images[array_rand($images)];
             });
 
             // Toggle menu on hamburger icon click
-            humburgerIcon.addEventListener('click', function () {
+            humburgerIcon.addEventListener('click', function() {
                 menu.classList.toggle('show');
             });
 
             // Hide menu when clicking outside of it
-            document.addEventListener('click', function (event) {
+            document.addEventListener('click', function(event) {
                 if (!menu.contains(event.target) && !humburgerIcon.contains(event.target)) {
                     menu.classList.remove('show');
                 }
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Chỉ yêu cầu quyền thông báo nếu chưa yêu cầu trước đó
             if (Notification.permission === "default") {
                 requestNotificationPermission();
@@ -598,7 +597,7 @@ $randomImage = $images[array_rand($images)];
             }
 
             // Xử lý thông báo cho từng từ
-            upcomingWords.forEach(function (word) {
+            upcomingWords.forEach(function(word) {
                 var nextReviewTime = new Date(word.next_review).getTime();
                 if (nextReviewTime <= currentTime && !notifiedWords.includes(word.content_id)) {
                     // Tạo thông báo và âm thanh một lần duy nhất
@@ -618,12 +617,12 @@ $randomImage = $images[array_rand($images)];
                     audio.play();
 
                     // Thiết lập sự kiện onclick cho thông báo
-                    notification.onclick = function () {
+                    notification.onclick = function() {
                         window.location.href = 'practice.php';
                     };
 
                     // Đóng thông báo sau 4 giây
-                    setTimeout(function () {
+                    setTimeout(function() {
                         notification.close();
                     }, 4000);
 
@@ -753,12 +752,6 @@ $randomImage = $images[array_rand($images)];
                     <a href="./index.php">
                         <img src="assets/writing.png" alt="Notebook">
                         <p><strong>NOTEBOOK <?php echo $totalVocabCount; ?></strong></p>
-                    </a>
-                </li>
-                <li id="sketchbook" class="custom-btn">
-                    <a href="./draft_content.php">
-                        <img src="assets/draft.png" alt="Draft">
-                        <p><strong>SKETCHBOOK <?php echo $totalDraftCount; ?></strong></p>
                     </a>
                 </li>
                 <li id="mastery" class="custom-btn">
