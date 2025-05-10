@@ -78,7 +78,10 @@ function getOldestCreateTime($conn)
     $sql = "SELECT MIN(create_time) FROM content WHERE is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
-    return $stmt->fetchColumn();
+    $result = $stmt->fetchColumn();
+
+    // Return current date if no active content exists
+    return $result ? $result : date("Y-m-d H:i:s");
 }
 
 function getTotalStats($conn)
