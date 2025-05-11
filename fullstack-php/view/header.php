@@ -328,7 +328,7 @@ $randomImage = $images[array_rand($images)];
     <!-- <link rel="stylesheet" href="view/css/font-open-sans.css"> -->
     <!-- <link rel="stylesheet" href="view/css/edit-form.css"> -->
 
-    <link rel="stylesheet" href="./sql/bootstrap.min.css">
+    <link rel="stylesheet" href="./lib/bootstrap.min.css">
 
     <style>
         #myImage {
@@ -485,9 +485,9 @@ $randomImage = $images[array_rand($images)];
             font-weight: bold;
         } */
     </style>
-    <script src="./sql/d3.v6.min.js"></script>
-    <script defer src="./sql/jquery-3.5.1.slim.min.js"></script>
-    <script defer src="./sql/bootstrap.min.js"></script>
+    <script src="./lib/d3.v6.min.js"></script>
+    <script defer src="./lib/jquery-3.5.1.slim.min.js"></script>
+    <script defer src="./lib/bootstrap.min.js"></script>
     <script defer>
         document.addEventListener('DOMContentLoaded', function() {
             var images = <?php echo json_encode($images); ?>;
