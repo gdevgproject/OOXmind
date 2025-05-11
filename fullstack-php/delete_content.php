@@ -28,8 +28,8 @@ if (isset($_GET['id'])) {
         pdo_execute($sqlDelete, $contentId);
     }
 
-    // Chuyển hướng về trang index.php
-    header('Location: index.php');
+    // Chuyển hướng về trang index.php với filter hiện tại
+    $returnFilter = isset($_GET['returnFilter']) ? $_GET['returnFilter'] : 'all';
+    header('Location: index.php?filter=' . $returnFilter);
     exit();
 }
-?>

@@ -1,10 +1,21 @@
 <?php
 include 'view/header.php';
 
-function getContentData($pdo, $page, $recordsPerPage = 10)
+function getContentData($pdo, $page, $recordsPerPage = 10, $filter = 'all')
 {
     $startFrom = ($page - 1) * $recordsPerPage;
-    $sql = "SELECT * FROM content ORDER BY create_time DESC LIMIT :startFrom, :recordsPerPage";
+
+    // Base SQL query
+    $sql = "SELECT * FROM content";
+
+    // Add filter condition
+    if ($filter === 'active') {
+        $sql .= " WHERE is_active = 1";
+    } elseif ($filter === 'inactive') {
+        $sql .= " WHERE is_active = 0";
+    }
+
+    $sql .= " ORDER BY create_time DESC LIMIT :startFrom, :recordsPerPage";
 
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':startFrom', $startFrom, PDO::PARAM_INT);
@@ -14,9 +25,17 @@ function getContentData($pdo, $page, $recordsPerPage = 10)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function getTotalPages($pdo, $recordsPerPage = 10)
+function getTotalPages($pdo, $recordsPerPage = 10, $filter = 'all')
 {
     $sql = "SELECT COUNT(*) FROM content";
+
+    // Add filter condition
+    if ($filter === 'active') {
+        $sql .= " WHERE is_active = 1";
+    } elseif ($filter === 'inactive') {
+        $sql .= " WHERE is_active = 0";
+    }
+
     $totalRecords = $pdo->query($sql)->fetchColumn();
     return ceil($totalRecords / $recordsPerPage);
 }
@@ -24,13 +43,19 @@ function getTotalPages($pdo, $recordsPerPage = 10)
 // Get database connection once
 $pdo = pdo_get_connection();
 
+// Get the current filter from GET parameters or set default to 'all'
+$filter = $_GET['filter'] ?? 'all';
+if (!in_array($filter, ['all', 'active', 'inactive'])) {
+    $filter = 'all';
+}
+
 // Get the current page from GET parameters or set default to 1
 $page = max((int) ($_GET['page'] ?? 1), 1); // Ensure the page is not less than 1
 $recordsPerPage = 10; // Number of items per page
 $startCount = ($page - 1) * $recordsPerPage + 1; // Calculate the starting count for display
 
-$contentData = getContentData($pdo, $page, $recordsPerPage);
-$totalPages = getTotalPages($pdo, $recordsPerPage);
+$contentData = getContentData($pdo, $page, $recordsPerPage, $filter);
+$totalPages = getTotalPages($pdo, $recordsPerPage, $filter);
 
 // Helper function for safe HTML output
 function safeOutput($string)
@@ -39,13 +64,13 @@ function safeOutput($string)
 }
 
 // Generate pagination HTML
-function getPaginationHtml($page, $totalPages, $paginationRange = 2)
+function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange = 2)
 {
     $html = '';
 
     // Previous page link
     if ($page > 1) {
-        $html .= "<a href='?page=" . ($page - 1) . "'>«</a>";
+        $html .= "<a href='?page=" . ($page - 1) . "&filter={$filter}'>«</a>";
     } else {
         $html .= "<a class='disabled'>«</a>";
     }
@@ -53,12 +78,12 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
     // Page numbers
     for ($i = max(1, $page - $paginationRange); $i <= min($totalPages, $page + $paginationRange); $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
-        $html .= "<a class='$activeClass' href='?page=$i'>$i</a>";
+        $html .= "<a class='$activeClass' href='?page={$i}&filter={$filter}'>{$i}</a>";
     }
 
     // Next page link
     if ($page < $totalPages) {
-        $html .= "<a href='?page=" . ($page + 1) . "'>»</a>";
+        $html .= "<a href='?page=" . ($page + 1) . "&filter={$filter}'>»</a>";
     } else {
         $html .= "<a class='disabled'>»</a>";
     }
@@ -299,6 +324,43 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
     .status-inactive {
         background-color: #F44336;
     }
+
+    /* Filter buttons */
+    .filter-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .filter-label {
+        font-weight: bold;
+        margin-right: 5px;
+        color: #fff;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    .filter-btn {
+        padding: 6px 12px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--primary-border);
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    .filter-btn.active {
+        background-color: var(--btn-primary);
+        box-shadow: 0 0 8px rgba(163, 196, 243, 0.8);
+    }
+
+    .filter-btn:hover:not(.active) {
+        background-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
 </style>
 
 <div class="mx-auto list-vocab-table text-shadow-white" style="width:90%">
@@ -306,6 +368,14 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
     <div class="input-group my-3">
         <input type="text" class="input-box text-shadow-white" id="searchInput"
             placeholder="Search..." aria-label="Search">
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="filter-container">
+        <span class="filter-label">Filter:</span>
+        <a href="?filter=all<?= $page > 1 ? '&page=' . $page : '' ?>" class="filter-btn <?= $filter === 'all' ? 'active' : '' ?>">All Items</a>
+        <a href="?filter=active<?= $page > 1 ? '&page=1' : '' ?>" class="filter-btn <?= $filter === 'active' ? 'active' : '' ?>">Active Only</a>
+        <a href="?filter=inactive<?= $page > 1 ? '&page=1' : '' ?>" class="filter-btn <?= $filter === 'inactive' ? 'active' : '' ?>">Inactive Only</a>
     </div>
 
     <div class="pagination-container">
@@ -316,7 +386,7 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
 
         <!-- Pagination -->
         <div class="pagination" style="margin-bottom: 20px;">
-            <?php echo getPaginationHtml($page, $totalPages); ?>
+            <?php echo getPaginationHtml($page, $totalPages, $filter); ?>
         </div>
         <div></div> <!-- Empty div to balance spacing -->
     </div>
@@ -499,6 +569,7 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
                         </div>
                     </div>
                 </div>
+                <input type="hidden" name="returnFilter" value="<?= $filter ?>">
                 <div class="text-center save-close">
                     <button type="button" class="btn btn-close" data-dismiss="modal">Close</button>
                     <h6>Get an IELTS score of 7.5!</h6>
@@ -602,7 +673,10 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 <script>
-    // Lấy URL hiện tại và đặt vào input ẩn
+    // Store current filter for use in JS functions
+    const currentFilter = "<?= $filter ?>";
+
+    // Lấy URL hiện tại và đặt vào input ẩn, preserving filter parameter
     document.getElementById('currentUrl').value = window.location.href;
 
     function previewFile(input, previewId) {
@@ -619,6 +693,7 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
             reader.readAsDataURL(file);
         }
     }
+
     let deleteHoldTimeout;
 
     function startDeleteHold(contentId) {
@@ -632,20 +707,17 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
     }
 
     function confirmDelete(contentId) {
-        // Hiển thị hộp thoại xác nhận chỉ một lần
         if (confirm("Are you sure you want to delete this content?")) {
-            deleteContent(contentId); // Gọi hàm deleteContent nếu xác nhận
+            deleteContent(contentId);
         }
     }
 
     function deleteContent(contentId, isForced = false) {
-        // Chỉ thực hiện xóa nếu không phải là trường hợp buộc
         if (!isForced) {
-            // Không cần xác nhận ở đây nữa
-            window.location.href = `delete_content.php?id=${contentId}`;
+            // Add filter parameter to redirect URL
+            window.location.href = `delete_content.php?id=${contentId}&returnFilter=${currentFilter}`;
         } else {
-            // Nếu là trường hợp buộc, thực hiện xóa ngay lập tức
-            window.location.href = `delete_content.php?id=${contentId}`;
+            window.location.href = `delete_content.php?id=${contentId}&returnFilter=${currentFilter}`;
         }
     }
 
@@ -654,12 +726,13 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
         const searchValue = this.value.trim().toLowerCase();
         clearTimeout(searchTimer);
 
-        if (searchValue) { // Chỉ tìm kiếm khi có giá trị
-            searchTimer = setTimeout(() => searchContent(searchValue), 60);
+        if (searchValue) {
+            // Include filter parameter in search
+            searchTimer = setTimeout(() => searchContent(searchValue, currentFilter), 60);
         }
     });
 
-    function searchContent(value) {
+    function searchContent(value, filter = 'all') {
         const xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
             if (this.readyState === 4 && this.status === 200) {
@@ -668,7 +741,8 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
                 attachPracticeDraftEvent();
             }
         };
-        xhttp.open("GET", `search_content.php?q=${value}`, true);
+        // Include filter in search request
+        xhttp.open("GET", `search_content.php?q=${value}&filter=${filter}`, true);
         xhttp.send();
     }
 
@@ -774,8 +848,7 @@ function getPaginationHtml($page, $totalPages, $paginationRange = 2)
     }
 
     function redirectToPracticeDraft(def, vocab) {
-        console.log(def, vocab);
-        window.location.href = `practice_draft.php?def=${encodeURIComponent(def)}&vocab=${encodeURIComponent(vocab)}`;
+        window.location.href = `practice_draft.php?def=${encodeURIComponent(def)}&vocab=${encodeURIComponent(vocab)}&returnFilter=${currentFilter}`;
     }
 
     window.onload = () => document.getElementById('searchInput').focus();

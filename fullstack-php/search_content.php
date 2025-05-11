@@ -3,6 +3,7 @@ require_once 'model/pdo.php';
 
 if (isset($_GET['q'])) {
     $searchValue = strtolower($_GET['q']);
+    $filter = $_GET['filter'] ?? 'all';
 
     // Check the length of the search keyword
     if (strlen($searchValue) > 600) {
@@ -12,23 +13,35 @@ if (isset($_GET['q'])) {
 
     $conn = pdo_get_connection();
 
-    // Exact match query
+    // Base filter conditions
+    $filterCondition = "";
+    $baseParams = [':searchValue' => $searchValue, ':likeValue' => "%$searchValue%"];
+
+    if ($filter === 'active') {
+        $filterCondition = " AND is_active = 1";
+    } elseif ($filter === 'inactive') {
+        $filterCondition = " AND is_active = 0";
+    }
+
+    // Exact match query with filter
     $stmtExact = executeQuery($conn, "
         SELECT * FROM content WHERE 
-        LOWER(vocab) = :searchValue OR 
+        (LOWER(vocab) = :searchValue OR 
         LOWER(def) = :searchValue OR 
         LOWER(question) = :searchValue OR 
-        LOWER(answer) = :searchValue
-    ", [':searchValue' => $searchValue]);
+        LOWER(answer) = :searchValue)
+        $filterCondition
+    ", $baseParams);
 
-    // Partial match query
+    // Partial match query with filter
     $stmtLike = executeQuery($conn, "
         SELECT * FROM content WHERE 
-        LOWER(vocab) LIKE :likeValue OR 
+        (LOWER(vocab) LIKE :likeValue OR 
         LOWER(def) LIKE :likeValue OR 
         LOWER(question) LIKE :likeValue OR 
-        LOWER(answer) LIKE :likeValue
-    ", [':likeValue' => "%$searchValue%"]);
+        LOWER(answer) LIKE :likeValue)
+        $filterCondition
+    ", $baseParams);
 
     // Display results
     echo "<table class='table table-bordered'>
@@ -93,7 +106,7 @@ if (isset($_GET['q'])) {
 
     // Display exact match results
     while ($row = $stmtExact->fetch(PDO::FETCH_ASSOC)) {
-        echoRow($row, $count);
+        echoRow($row, $count, $filter);
         $resultsFound = true; // Found results
         if ($count >= 30)
             break; // Limit to 30 results
@@ -102,7 +115,7 @@ if (isset($_GET['q'])) {
     // Display partial match results, excluding already displayed results
     while ($row = $stmtLike->fetch(PDO::FETCH_ASSOC)) {
         if (!isExactMatch($row, $searchValue)) {
-            echoRow($row, $count);
+            echoRow($row, $count, $filter);
             $resultsFound = true; // Found results
             if ($count >= 30)
                 break; // Limit to 30 results
@@ -137,14 +150,14 @@ function isExactMatch($row, $searchValue)
         (string) $row['level'] === $searchValue;
 }
 
-function echoRow($row, &$count)
+function echoRow($row, &$count, $filter)
 {
     $isActive = (int)$row['is_active'];
     $rowClass = $isActive ? 'active-vocab' : 'inactive-vocab';
 
     echo "<tr class='$rowClass'>";
     echo "<td>
-        <button class='custom-btn text-center' data-def='" . htmlspecialchars($row['def']) . "' data-vocab='" . htmlspecialchars($row['vocab']) . "'>
+        <button class='custom-btn text-center' data-def='" . htmlspecialchars($row['def']) . "' data-vocab='" . htmlspecialchars($row['vocab']) . "' data-filter='" . htmlspecialchars($filter) . "'>
             <img src='assets/homework.png' alt='Practice Draft'>
         </button>
         <button onclick='fillEditModal(

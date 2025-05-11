@@ -14,6 +14,9 @@ if (isset($_POST['save'])) {
     $answer = $_POST['newAnswer'];
     $is_active = isset($_POST['newIsActive']) ? 1 : 0;  // Check if the checkbox was checked
 
+    // Get the filter to return to
+    $returnFilter = $_POST['returnFilter'] ?? 'all';
+
     // Tạo tên file chung theo thời gian
     $timestamp = date('s_i_G_j_n_Y');
 
@@ -27,8 +30,8 @@ if (isset($_POST['save'])) {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     pdo_execute($sql, $vocab, $part_of_speech, $ipa, $def, $ex, $question, $answer, $imagePath, $videoPath, $audioPath, $is_active);
 
-    // Chuyển hướng về index.php
-    header('Location: index.php');
+    // Chuyển hướng về index.php với filter hiện tại
+    header("Location: index.php?filter=$returnFilter");
     exit();
 }
 

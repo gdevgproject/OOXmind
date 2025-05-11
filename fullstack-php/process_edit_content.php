@@ -20,7 +20,6 @@ if (isset($_POST['update'])) {
     $newQuestion = $_POST['editQuestion'];
     $newAnswer = $_POST['editAnswer'];
     $isActive = isset($_POST['editIsActive']) ? 1 : 0;  // Check if the checkbox was checked
-    // Nhận URL hiện tại từ form
     $currentUrl = $_POST['currentUrl'];
 
     // Kết nối cơ sở dữ liệu một lần
