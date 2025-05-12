@@ -3,12 +3,13 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost:3306
--- Thời gian đã tạo: Th5 09, 2025 lúc 02:38 AM
+-- Thời gian đã tạo: Th5 10, 2025 lúc 08:04 PM
 -- Phiên bản máy phục vụ: 8.0.30
 -- Phiên bản PHP: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
+SET time_zone = "+00:00";
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -27,6 +28,8 @@ USE `openyourself`;
 --
 -- Cấu trúc bảng cho bảng `activity_log`
 --
+-- Tạo: Th10 03, 2024 lúc 02:02 PM
+--
 
 DROP TABLE IF EXISTS `activity_log`;
 CREATE TABLE IF NOT EXISTS `activity_log` (
@@ -37,12 +40,14 @@ CREATE TABLE IF NOT EXISTS `activity_log` (
   `open_time` time DEFAULT NULL,
   `close_time` time DEFAULT NULL,
   PRIMARY KEY (`log_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=141 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `content`
+--
+-- Tạo: Th5 10, 2025 lúc 07:26 PM
 --
 
 DROP TABLE IF EXISTS `content`;
@@ -66,13 +71,16 @@ CREATE TABLE IF NOT EXISTS `content` (
   `video_path` varchar(255) DEFAULT NULL,
   `response_time` int DEFAULT '0',
   `is_recovery` tinyint(1) DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`content_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2695 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `count`
+--
+-- Tạo: Th1 16, 2024 lúc 02:28 PM
 --
 
 DROP TABLE IF EXISTS `count`;
@@ -81,32 +89,7 @@ CREATE TABLE IF NOT EXISTS `count` (
   `count_name` varchar(255) NOT NULL,
   `count` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`count_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `draft_content`
---
-
-DROP TABLE IF EXISTS `draft_content`;
-CREATE TABLE IF NOT EXISTS `draft_content` (
-  `draft_id` int NOT NULL AUTO_INCREMENT,
-  `vocab` varchar(255) DEFAULT NULL,
-  `part_of_speech` varchar(255) DEFAULT NULL,
-  `ipa` varchar(255) DEFAULT NULL,
-  `def` text,
-  `ex` text,
-  `question` text,
-  `answer` text,
-  `create_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `image_path` varchar(255) DEFAULT NULL,
-  `audio_path` varchar(255) DEFAULT NULL,
-  `video_path` varchar(255) DEFAULT NULL,
-  `accepted` int DEFAULT '0',
-  PRIMARY KEY (`draft_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=535 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

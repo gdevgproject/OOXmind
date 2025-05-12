@@ -209,6 +209,52 @@ $colorIndex = 6;
             opacity: 1;
         }
     }
+
+    /* No data message styles */
+    .no-data-message {
+        height: 230px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #fff176;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .no-upcoming-words {
+        animation: fadeInOut 3s infinite alternate;
+    }
+
+    @keyframes fadeInOut {
+        from {
+            opacity: 0.7;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .pulse-animation {
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
 </style>
 
 <div class="row justify-content-center">
@@ -241,29 +287,42 @@ $colorIndex = 6;
         <?php endif; ?>
 
         <div>
-            <?php foreach ($upcomingWords as $word): ?>
-                <div class="custom-div d-flex align-items-center mb-1 text-shadow" style="color: #fff176;">
-                    <div class="text-center" style="padding: 7px 10px; border-radius: 15px; background-color: <?= $colors[$colorIndex]; ?>">
+            <?php if (empty($upcomingWords)): ?>
+                <div class="custom-div d-flex align-items-center mb-1 text-shadow no-upcoming-words">
+                    <div class="text-center" style="padding: 7px 10px; border-radius: 15px; background-color: #81c784;">
                         <div>
-                            <img src="assets/notification-bell.png" alt="đồng hồ cát" width="22">
-                        </div>
-                        <div>
-                            <strong class="countdown"
-                                data-next-review="<?= $word['next_review'] ?>"
-                                data-last-review="<?= $word['last_review'] ?>"></strong>
+                            <img src="assets/perfection.png" alt="perfection" width="22">
                         </div>
                     </div>
-                    <div class="text-justify text-shadow" style="padding-left: 20px; color: <?= $colors[$colorIndex]; ?>">
-                        <strong>
-                            <?= mb_strlen($word['vocab']) > 100 ? mb_substr($word['vocab'], 0, 100) . ' ...' : $word['vocab'] ?>
-                        </strong>
-                        <strong>
-                            <?= mb_strlen($word['question']) > 100 ? mb_substr($word['question'], 0, 100) . ' ...' : $word['question'] ?>
-                        </strong>
+                    <div class="text-justify text-shadow" style="padding-left: 20px; color: #81c784;">
+                        <strong>No upcoming reviews. Great job! Add more vocabulary to continue learning.</strong>
                     </div>
                 </div>
-                <?php $colorIndex = ($colorIndex + 1) % count($colors); ?>
-            <?php endforeach; ?>
+            <?php else: ?>
+                <?php foreach ($upcomingWords as $word): ?>
+                    <div class="custom-div d-flex align-items-center mb-1 text-shadow" style="color: #fff176;">
+                        <div class="text-center" style="padding: 7px 10px; border-radius: 15px; background-color: <?= $colors[$colorIndex]; ?>">
+                            <div>
+                                <img src="assets/notification-bell.png" alt="đồng hồ cát" width="22">
+                            </div>
+                            <div>
+                                <strong class="countdown"
+                                    data-next-review="<?= $word['next_review'] ?>"
+                                    data-last-review="<?= $word['last_review'] ?>"></strong>
+                            </div>
+                        </div>
+                        <div class="text-justify text-shadow" style="padding-left: 20px; color: <?= $colors[$colorIndex]; ?>">
+                            <strong>
+                                <?= mb_strlen($word['vocab']) > 100 ? mb_substr($word['vocab'], 0, 100) . ' ...' : $word['vocab'] ?>
+                            </strong>
+                            <strong>
+                                <?= mb_strlen($word['question']) > 100 ? mb_substr($word['question'], 0, 100) . ' ...' : $word['question'] ?>
+                            </strong>
+                        </div>
+                    </div>
+                    <?php $colorIndex = ($colorIndex + 1) % count($colors); ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -295,11 +354,18 @@ $colorIndex = 6;
 
     function refreshPageWhenCountdownEnds() {
         const countdownElements = document.querySelectorAll('.countdown');
-        countdownElements.forEach((element) => {
-            const nextReviewTime = new Date(element.dataset.nextReview).getTime();
-            const lastReviewTime = new Date(element.dataset.lastReview).getTime();
 
-            setInterval(() => updateCountdown(element, nextReviewTime), 1000);
+        // If no countdown elements are found, don't proceed further
+        if (countdownElements.length === 0) {
+            return;
+        }
+
+        countdownElements.forEach((element) => {
+            // Check if the element has the required data attributes
+            if (element.dataset.nextReview) {
+                const nextReviewTime = new Date(element.dataset.nextReview).getTime();
+                setInterval(() => updateCountdown(element, nextReviewTime), 1000);
+            }
         });
     }
 
@@ -313,78 +379,175 @@ $colorIndex = 6;
             return;
         }
 
+        // Calculate hours, minutes, seconds
         const hours = String(Math.floor(timeDifference / (1000 * 60 * 60))).padStart(2, '0');
         const minutes = String(Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
         const seconds = String(Math.floor((timeDifference % (1000 * 60)) / 1000)).padStart(2, '0');
 
-        element.innerHTML = `${hours}:${minutes}:${seconds}`;
+        // Format based on time remaining
+        if (hours === '00') {
+            // If less than 1 hour, show in red
+            element.innerHTML = `<span style="color: #ff5252;">${minutes}:${seconds}</span>`;
+        } else {
+            element.innerHTML = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Add pulse animation when less than 15 minutes remain
+        if (hours === '00' && parseInt(minutes) < 15) {
+            element.classList.add('pulse-animation');
+        }
     }
 
-    refreshPageWhenCountdownEnds();
+    // Add CSS for pulse animation
+    document.head.insertAdjacentHTML('beforeend', `
+        <style>
+            .pulse-animation {
+                animation: pulse 1s infinite;
+            }
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+        </style>
+    `);
+
+    // Initialize the countdown functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshPageWhenCountdownEnds();
+    });
 
     const data = <?php echo $jsonData; ?>;
 
-    // Sắp xếp lại dữ liệu từ cấp độ cao nhất đến thấp nhất
-    data.sort((a, b) => a.level - b.level);
+    // Check if data exists and has items
+    if (!data || data.length === 0) {
+        // Create a friendly message when no data is available
+        d3.select("#chart")
+            .append("div")
+            .attr("class", "no-data-message")
+            .style("height", "230px")
+            .style("display", "flex")
+            .style("align-items", "center")
+            .style("justify-content", "center")
+            .style("background-color", "rgba(255,255,255,0.1)")
+            .style("border-radius", "10px")
+            .style("color", "#fff176")
+            .style("text-shadow", "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000")
+            .style("font-weight", "bold")
+            .style("font-size", "18px")
+            .html("Start adding vocabulary to see your progress chart!");
+    } else {
+        // Sort data from lowest to highest level
+        data.sort((a, b) => a.level - b.level);
 
-    // Xử lý dữ liệu, lấy ra số lượng từ vựng cho mỗi cấp độ
-    const vocabCountByLevel = data.map(item => item.vocab_count);
+        // Get vocab count for each level
+        const vocabCountByLevel = data.map(item => item.vocab_count);
 
-    // Mảng màu sắc tương ứng với từng cấp độ
-    const colors = ['#e57373', '#ffb74d', '#fff176', '#81c784', '#4dd0e1', '#64b5f6', '#ba68c8'];
+        // Define colors array
+        const colors = ['#e57373', '#ffb74d', '#fff176', '#81c784', '#4dd0e1', '#64b5f6', '#ba68c8'];
 
+        // Fill in missing colors if needed
+        while (colors.length < vocabCountByLevel.length) {
+            colors.push(colors[colors.length % 7]);
+        }
 
+        // Calculate total vocab count
+        const totalVocabCount = vocabCountByLevel.reduce((a, b) => a + b, 0);
 
-    // Tính tổng số lượng từ vựng của 7 cấp độ cao nhất
-    const totalVocabCount = vocabCountByLevel.reduce((a, b) => a + b, 0);
+        // Ensure minimum height for visibility even with small counts
+        const calculateHeight = count => {
+            const percentage = (count / totalVocabCount) * 100;
+            return Math.max(percentage, 10); // Minimum 10% height for visibility
+        };
 
-    // Tính chiều cao tương ứng với tỷ lệ phần trăm số lượng từ vựng của từng cấp độ
-    const heights = vocabCountByLevel.map(count => Math.min((count / totalVocabCount) * 100, 100));
+        const heights = vocabCountByLevel.map(calculateHeight);
 
-    // Kích thước của biểu đồ
-    const width = 700;
-    const height = 230;
-    const columnWidth = Math.min(100, (width - 15 * (vocabCountByLevel.length - 1)) / vocabCountByLevel.length);
-    const gap = 12;
+        // Chart dimensions - adjust based on data points
+        const width = 700;
+        const height = 230;
 
-    // Tạo đối tượng SVG
-    const svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height);
+        // Adjust column width based on number of data points
+        const minColumnWidth = 40; // Minimum column width
+        const maxColumnWidth = 100; // Maximum column width
+        const calculatedWidth = (width - 15 * (vocabCountByLevel.length - 1)) / vocabCountByLevel.length;
+        const columnWidth = Math.max(Math.min(calculatedWidth, maxColumnWidth), minColumnWidth);
+        const gap = Math.max(8, Math.min(15, 20 - vocabCountByLevel.length)); // Dynamic gap
 
-    // Tạo biểu đồ cột
-    svg.selectAll("rect")
-        .data(heights)
-        .enter().append("rect")
-        .attr("x", (_, i) => i * (columnWidth + gap))
-        .attr("y", d => height - (d / 100) * height)
-        .attr("width", columnWidth)
-        .attr("height", d => (d / 100) * height)
-        .attr("fill", (_, i) => colors[i])
-        .attr("rx", 10)
-        .attr("ry", 10);
+        // Create SVG
+        const svg = d3.select("#chart").append("svg")
+            .attr("width", "100%")
+            .attr("height", height)
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // Thêm nhãn văn bản lên trên đỉnh mỗi cột với màu sắc và hiệu ứng text-shadow
-    svg.selectAll("text")
-        .data(vocabCountByLevel)
-        .enter().append("text")
-        .attr("x", (_, i) => i * (columnWidth + gap) + columnWidth / 2)
-        .attr("y", d => height - (d / totalVocabCount) * height - 20)
-        .attr("text-anchor", "middle")
-        .attr("dy", "0.75em")
-        .attr("fill", (_, i) => colors[i]) // Màu chữ của từng cấp độ
-        .attr("class", "text-shadow") // Gán class nếu đã có sẵn
-        .html(d => `<tspan font-weight='bold'>${d} words</tspan>`)
-        .style("text-shadow", "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000");
+        // Create columns with animation
+        svg.selectAll("rect")
+            .data(heights)
+            .enter().append("rect")
+            .attr("x", (_, i) => i * (columnWidth + gap))
+            .attr("y", height) // Start from bottom for animation
+            .attr("width", columnWidth)
+            .attr("height", 0) // Start with height 0 for animation
+            .attr("fill", (_, i) => colors[i % colors.length])
+            .attr("rx", 10)
+            .attr("ry", 10)
+            .transition() // Add transition
+            .duration(1000) // 1 second animation
+            .delay((_, i) => i * 100) // Stagger animation
+            .attr("y", d => height - (d / 100) * height)
+            .attr("height", d => (d / 100) * height);
 
-    // Thêm đường trục x
-    svg.selectAll("line")
-        .data(heights)
-        .enter().append("line")
-        .attr("x1", (_, i) => i * (columnWidth + gap))
-        .attr("y1", height)
-        .attr("x2", (_, i) => i * (columnWidth + gap) + columnWidth)
-        .attr("y2", height)
-        .attr("stroke", "#bdbdbd")
-        .attr("stroke-width", 7);
+        // Add labels
+        svg.selectAll(".label")
+            .data(vocabCountByLevel)
+            .enter().append("text")
+            .attr("class", "label text-shadow")
+            .attr("x", (_, i) => i * (columnWidth + gap) + columnWidth / 2)
+            .attr("y", d => height - (calculateHeight(d) / 100) * height - 20)
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.75em")
+            .attr("fill", (_, i) => colors[i % colors.length])
+            .style("opacity", 0) // Start invisible for animation
+            .style("text-shadow", "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000")
+            .html(d => `<tspan font-weight='bold'>${d} word${d !== 1 ? 's' : ''}</tspan>`)
+            .transition()
+            .duration(1000)
+            .delay((_, i) => i * 100 + 500) // Delay after columns appear
+            .style("opacity", 1); // Fade in
+
+        // Add level indicators
+        svg.selectAll(".level-indicator")
+            .data(data)
+            .enter().append("text")
+            .attr("class", "level-indicator text-shadow")
+            .attr("x", (_, i) => i * (columnWidth + gap) + columnWidth / 2)
+            .attr("y", height - 5)
+            .attr("text-anchor", "middle")
+            .attr("fill", "white")
+            .style("font-size", "12px")
+            .style("opacity", 0) // Start invisible
+            .style("text-shadow", "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000")
+            .text(d => `Level ${d.level}`)
+            .transition()
+            .duration(1000)
+            .delay((_, i) => i * 100 + 800) // Appear last
+            .style("opacity", 1);
+
+        // Add axis line
+        svg.append("line")
+            .attr("x1", 0)
+            .attr("y1", height)
+            .attr("x2", Math.max(width, vocabCountByLevel.length * (columnWidth + gap) - gap))
+            .attr("y2", height)
+            .attr("stroke", "#bdbdbd")
+            .attr("stroke-width", 4);
+    }
 </script>
 
 <!-- Add New Modal -->

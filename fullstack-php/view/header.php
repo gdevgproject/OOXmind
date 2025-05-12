@@ -5,7 +5,7 @@ $currentDateTime = date("Y-m-d H:i:s");
 
 function getCountNextReview($conn, $currentDateTime)
 {
-    $sql = "SELECT COUNT(*) FROM content WHERE next_review <= :currentDateTime AND next_review IS NOT NULL";
+    $sql = "SELECT COUNT(*) FROM content WHERE next_review <= :currentDateTime AND next_review IS NOT NULL AND is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
     $stmt->execute();
@@ -14,15 +14,7 @@ function getCountNextReview($conn, $currentDateTime)
 
 function getTotalVocabCount($conn)
 {
-    $sql = "SELECT COUNT(*) FROM content";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchColumn();
-}
-
-function getTotalDraftCount($conn)
-{
-    $sql = "SELECT COUNT(*) FROM draft_content";
+    $sql = "SELECT COUNT(*) FROM content WHERE is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     return $stmt->fetchColumn();
@@ -38,7 +30,7 @@ function gettotalCountPracticeDraft($conn)
 
 function homeGetUpcomingWords($conn, $currentDateTime)
 {
-    $sql = "SELECT * FROM content WHERE next_review IS NOT NULL AND next_review > :currentDateTime ORDER BY next_review ASC LIMIT 5";
+    $sql = "SELECT * FROM content WHERE next_review IS NOT NULL AND next_review > :currentDateTime AND is_active = 1 ORDER BY next_review ASC LIMIT 5";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
     $stmt->execute();
@@ -47,8 +39,8 @@ function homeGetUpcomingWords($conn, $currentDateTime)
 
 function homeGetCounts($conn)
 {
-    $sqlVocabCount = "SELECT COUNT(*) FROM content WHERE vocab IS NOT NULL AND vocab != ''";
-    $sqlOtherCount = "SELECT COUNT(*) FROM content WHERE vocab IS NULL OR vocab = ''";
+    $sqlVocabCount = "SELECT COUNT(*) FROM content WHERE vocab IS NOT NULL AND vocab != '' AND is_active = 1";
+    $sqlOtherCount = "SELECT COUNT(*) FROM content WHERE (vocab IS NULL OR vocab = '') AND is_active = 1";
 
     $stmtVocab = $conn->prepare($sqlVocabCount);
     $stmtVocab->execute();
@@ -63,7 +55,7 @@ function homeGetCounts($conn)
 
 function homeGetCount($conn, $currentDateTime)
 {
-    $sqlCount = "SELECT COUNT(*) as count FROM content WHERE next_review IS NOT NULL AND next_review <= :currentDateTime";
+    $sqlCount = "SELECT COUNT(*) as count FROM content WHERE next_review IS NOT NULL AND next_review <= :currentDateTime AND is_active = 1";
     $stmtCount = $conn->prepare($sqlCount);
     $stmtCount->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
     $stmtCount->execute();
@@ -83,22 +75,25 @@ function getFolderSize($folderPath)
 
 function getOldestCreateTime($conn)
 {
-    $sql = "SELECT MIN(create_time) FROM content";
+    $sql = "SELECT MIN(create_time) FROM content WHERE is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
-    return $stmt->fetchColumn();
+    $result = $stmt->fetchColumn();
+
+    // Return current date if no active content exists
+    return $result ? $result : date("Y-m-d H:i:s");
 }
 
 function getTotalStats($conn)
 {
     // Tính tổng level của từ vựng
-    $sqlLevels = "SELECT SUM(level) FROM content";
+    $sqlLevels = "SELECT SUM(level) FROM content WHERE is_active = 1";
     $stmtLevels = $conn->prepare($sqlLevels);
     $stmtLevels->execute();
     $totalLevels = $stmtLevels->fetchColumn();
 
     // Tính tổng số từ vựng
-    $sqlVocabCount = "SELECT COUNT(*) FROM content";
+    $sqlVocabCount = "SELECT COUNT(*) FROM content WHERE is_active = 1";
     $stmtVocabCount = $conn->prepare($sqlVocabCount);
     $stmtVocabCount->execute();
     $totalVocab = $stmtVocabCount->fetchColumn();
@@ -136,7 +131,8 @@ function initializeActivityLog()
     return $existingLog['total_time_spent']; // Return total_time_spent if record exists
 }
 
-function getVocabReviewedCountToday($conn) {
+function getVocabReviewedCountToday($conn)
+{
     $currentDate = date("Y-m-d");
     $sql = "SELECT vocab_reviewed_count FROM activity_log WHERE activity_date = :currentDate";
     $stmt = $conn->prepare($sql);
@@ -145,46 +141,48 @@ function getVocabReviewedCountToday($conn) {
     return $stmt->fetchColumn();
 }
 
-function getVocabCreatedCountToday($conn) {
+function getVocabCreatedCountToday($conn)
+{
     $currentDate = date("Y-m-d");
-    $sql = "SELECT COUNT(*) FROM content WHERE DATE(create_time) = :currentDate";
+    $sql = "SELECT COUNT(*) FROM content WHERE DATE(create_time) = :currentDate AND is_active = 1";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':currentDate', $currentDate, PDO::PARAM_STR);
     $stmt->execute();
     return $stmt->fetchColumn();
 }
 
-function getColorBasedOnCount($count, $isTodayCount = false) {
-        if ($count < 10) {
-            return '#e57373'; // Đỏ nhạt
-        } elseif ($count < 20) {
-            return '#ff8a65'; // Cam đậm nhạt
-        } elseif ($count < 30) {
-            return '#ffb74d'; // Cam nhạt
-        } elseif ($count < 40) {
-            return '#ffd54f'; // Vàng đậm
-        } elseif ($count < 50) {
-            return '#fff176'; // Vàng nhạt
-        } elseif ($count < 60) {
-            return '#aed581'; // Xanh lục đậm
-        } elseif ($count < 70) {
-            return '#81c784'; // Xanh lục nhạt
-        } elseif ($count < 80) {
-            return '#4dd0e1'; // Xanh ngọc nhạt
-        } elseif ($count < 90) {
-            return '#64b5f6'; // Xanh dương nhạt
-        } elseif ($count < 100) {
-            return '#ce93d8'; // Tím đậm nhạt 
-        } else {
-            return '#ba68c8'; // Tím nhạt
-        }
+function getColorBasedOnCount($count, $isTodayCount = false)
+{
+    if ($count < 10) {
+        return '#e57373'; // Đỏ nhạt
+    } elseif ($count < 20) {
+        return '#ff8a65'; // Cam đậm nhạt
+    } elseif ($count < 30) {
+        return '#ffb74d'; // Cam nhạt
+    } elseif ($count < 40) {
+        return '#ffd54f'; // Vàng đậm
+    } elseif ($count < 50) {
+        return '#fff176'; // Vàng nhạt
+    } elseif ($count < 60) {
+        return '#aed581'; // Xanh lục đậm
+    } elseif ($count < 70) {
+        return '#81c784'; // Xanh lục nhạt
+    } elseif ($count < 80) {
+        return '#4dd0e1'; // Xanh ngọc nhạt
+    } elseif ($count < 90) {
+        return '#64b5f6'; // Xanh dương nhạt
+    } elseif ($count < 100) {
+        return '#ce93d8'; // Tím đậm nhạt 
+    } else {
+        return '#ba68c8'; // Tím nhạt
+    }
 }
 
 // Hàm lấy số lượng từ vựng hôm nay
 function getTodayVocabCount($conn)
 {
     $today = date('Y-m-d');
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM content WHERE DATE(create_time) = :today");
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM content WHERE DATE(create_time) = :today AND is_active = 1");
     $stmt->execute(['today' => $today]);
     return $stmt->fetchColumn();
 }
@@ -207,7 +205,7 @@ try {
     $conn = pdo_get_connection();
 
     // Truy vấn lấy 7 cấp độ cao nhất cùng với số lượng từ vựng của mỗi cấp độ
-    $sql = "SELECT level, COUNT(*) as vocab_count FROM content GROUP BY level ORDER BY level DESC LIMIT 7";
+    $sql = "SELECT level, COUNT(*) as vocab_count FROM content WHERE is_active = 1 GROUP BY level ORDER BY level DESC LIMIT 7";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute();
@@ -226,7 +224,6 @@ try {
 $conn = pdo_get_connection();
 $countNextReview = getCountNextReview($conn, $currentDateTime);
 $totalVocabCount = getTotalVocabCount($conn);
-$totalDraftCount = getTotalDraftCount($conn);
 $totalCountPracticeDraft = gettotalCountPracticeDraft($conn);
 $upcomingWords = homeGetUpcomingWords($conn, $currentDateTime);
 // Lấy số lượng từ vựng và khác
@@ -331,7 +328,7 @@ $randomImage = $images[array_rand($images)];
     <!-- <link rel="stylesheet" href="view/css/font-open-sans.css"> -->
     <!-- <link rel="stylesheet" href="view/css/edit-form.css"> -->
 
-    <link rel="stylesheet" href="./sql/bootstrap.min.css">
+    <link rel="stylesheet" href="./lib/bootstrap.min.css">
 
     <style>
         #myImage {
@@ -345,7 +342,8 @@ $randomImage = $images[array_rand($images)];
             z-index: -1;
             transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
             animation: animateImage 40s infinite alternate;
-            will-change: transform; /* Optimize performance */
+            will-change: transform;
+            /* Optimize performance */
             /* filter: brightness(0.85); */
         }
 
@@ -357,15 +355,19 @@ $randomImage = $images[array_rand($images)];
             0% {
                 transform: scale(1) translate(0, 0);
             }
+
             25% {
                 transform: scale(1.05) translate(10px, -10px);
             }
+
             50% {
                 transform: scale(1.1) translate(-10px, 10px) rotate(2deg);
             }
+
             75% {
                 transform: scale(1.05) translate(10px, 10px);
             }
+
             100% {
                 transform: scale(1) translate(0, 0) rotate(0deg);
             }
@@ -379,10 +381,12 @@ $randomImage = $images[array_rand($images)];
             top: 0;
             left: 0;
             height: 11px;
-            background: rgba(44, 62, 80, 0.5);  /* Soft dark blue-gray with 80% opacity */
+            background: rgba(44, 62, 80, 0.5);
+            /* Soft dark blue-gray with 80% opacity */
             overflow: hidden;
             position: relative;
-            border: 1px solid #34495e;  /* Slightly lighter dark blue-gray */
+            border: 1px solid #34495e;
+            /* Slightly lighter dark blue-gray */
 
         }
 
@@ -481,11 +485,11 @@ $randomImage = $images[array_rand($images)];
             font-weight: bold;
         } */
     </style>
-    <script src="./sql/d3.v6.min.js"></script>
-    <script defer src="./sql/jquery-3.5.1.slim.min.js"></script>
-    <script defer src="./sql/bootstrap.min.js"></script>
-    <script defer >
-        document.addEventListener('DOMContentLoaded', function () {
+    <script src="./lib/d3.v6.min.js"></script>
+    <script defer src="./lib/jquery-3.5.1.slim.min.js"></script>
+    <script defer src="./lib/bootstrap.min.js"></script>
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
             var images = <?php echo json_encode($images); ?>;
             var imageElement = document.getElementById('myImage');
             var currentImageIndex = 0;
@@ -493,7 +497,7 @@ $randomImage = $images[array_rand($images)];
             function changeImageWithTransition() {
                 var newImage = images[currentImageIndex];
                 imageElement.classList.add('transitioning');
-                setTimeout(function () {
+                setTimeout(function() {
                     imageElement.src = newImage;
                     imageElement.classList.remove('transitioning');
                     currentImageIndex++;
@@ -506,17 +510,15 @@ $randomImage = $images[array_rand($images)];
             setInterval(changeImageWithTransition, 10000);
         });
 
-        window.addEventListener('scroll', function () {
+        window.addEventListener('scroll', function() {
             var scrolled = window.pageYOffset;
             var image = document.getElementById('myImage');
             var rate = scrolled * -0.2; // Giảm tốc độ để tránh cảm giác chóng mặt
             image.style.transform = 'translateY(' + rate + 'px)';
         });
-
-
     </script>
     <script defer>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const audio = document.getElementById('backgroundMusic');
             const toggleMusicButton = document.getElementById('toggle-music');
             const toggleMusicIcon = document.getElementById('toggle-music-icon');
@@ -532,14 +534,14 @@ $randomImage = $images[array_rand($images)];
                 audio.pause();
                 toggleMusicIcon.src = 'assets/mute.png'; // Set to mute icon
             } else {
-                audio.play().catch(() => { }); // Handle potential play errors
+                audio.play().catch(() => {}); // Handle potential play errors
                 toggleMusicIcon.src = 'assets/audio.png'; // Set to sound icon
             }
 
             // Toggle music on button click
-            toggleMusicButton.addEventListener('click', function () {
+            toggleMusicButton.addEventListener('click', function() {
                 if (audio.paused) {
-                    audio.play().catch(() => { }); // Handle potential play errors
+                    audio.play().catch(() => {}); // Handle potential play errors
                     toggleMusicIcon.src = 'assets/audio.png'; // Set to sound icon
                     localStorage.setItem('musicEnabled', 'true');
                 } else {
@@ -550,19 +552,19 @@ $randomImage = $images[array_rand($images)];
             });
 
             // Toggle menu on hamburger icon click
-            humburgerIcon.addEventListener('click', function () {
+            humburgerIcon.addEventListener('click', function() {
                 menu.classList.toggle('show');
             });
 
             // Hide menu when clicking outside of it
-            document.addEventListener('click', function (event) {
+            document.addEventListener('click', function(event) {
                 if (!menu.contains(event.target) && !humburgerIcon.contains(event.target)) {
                     menu.classList.remove('show');
                 }
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Chỉ yêu cầu quyền thông báo nếu chưa yêu cầu trước đó
             if (Notification.permission === "default") {
                 requestNotificationPermission();
@@ -598,7 +600,7 @@ $randomImage = $images[array_rand($images)];
             }
 
             // Xử lý thông báo cho từng từ
-            upcomingWords.forEach(function (word) {
+            upcomingWords.forEach(function(word) {
                 var nextReviewTime = new Date(word.next_review).getTime();
                 if (nextReviewTime <= currentTime && !notifiedWords.includes(word.content_id)) {
                     // Tạo thông báo và âm thanh một lần duy nhất
@@ -618,12 +620,12 @@ $randomImage = $images[array_rand($images)];
                     audio.play();
 
                     // Thiết lập sự kiện onclick cho thông báo
-                    notification.onclick = function () {
+                    notification.onclick = function() {
                         window.location.href = 'practice.php';
                     };
 
                     // Đóng thông báo sau 4 giây
-                    setTimeout(function () {
+                    setTimeout(function() {
                         notification.close();
                     }, 4000);
 
@@ -753,12 +755,6 @@ $randomImage = $images[array_rand($images)];
                     <a href="./index.php">
                         <img src="assets/writing.png" alt="Notebook">
                         <p><strong>NOTEBOOK <?php echo $totalVocabCount; ?></strong></p>
-                    </a>
-                </li>
-                <li id="sketchbook" class="custom-btn">
-                    <a href="./draft_content.php">
-                        <img src="assets/draft.png" alt="Draft">
-                        <p><strong>SKETCHBOOK <?php echo $totalDraftCount; ?></strong></p>
                     </a>
                 </li>
                 <li id="mastery" class="custom-btn">
