@@ -99,6 +99,16 @@ if (isset($_GET['q'])) {
         .status-inactive {
             background-color: #F44336;
         }
+        
+        .badge-info {
+            background-color: #17a2b8;
+            color: white;
+            padding: 3px 7px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-top: 3px;
+        }
     </style>";
 
     $count = 1;
@@ -154,6 +164,7 @@ function echoRow($row, &$count, $filter)
 {
     $isActive = (int)$row['is_active'];
     $rowClass = $isActive ? 'active-vocab' : 'inactive-vocab';
+    $level = (int)$row['level'];
 
     echo "<tr class='$rowClass'>";
     echo "<td>
@@ -172,7 +183,8 @@ function echoRow($row, &$count, $filter)
             " . json_encode(htmlspecialchars($row['image_path']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ",
             " . json_encode(htmlspecialchars($row['video_path']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ",
             " . json_encode(htmlspecialchars($row['audio_path']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ",
-            " . json_encode((int)$row['is_active']) . "
+            {$isActive},
+            {$level}
             )' class='custom-btn text-center'><img src='assets/edit.png' alt='Edit'></button>
         <button class='custom-btn text-center' onclick='deleteContent({$row['content_id']})'><img src='assets/bin.png' alt='Delete'></button>
     </td>";
@@ -180,7 +192,14 @@ function echoRow($row, &$count, $filter)
     echo "<td>{$count}</td>";
     echo "<td>
         <span class='status-indicator " . ($isActive ? 'status-active' : 'status-inactive') . "'></span>
-        " . htmlspecialchars($row['vocab']) . " " . htmlspecialchars($row['part_of_speech']) . "<br>" . htmlspecialchars($row['ipa']) . "</td>";
+        " . htmlspecialchars($row['vocab']) . " " . htmlspecialchars($row['part_of_speech']) . "<br>" . htmlspecialchars($row['ipa']);
+
+    // Display level badge if level > 0
+    if ($level > 0) {
+        echo "<br><span class='badge badge-info'>Level: {$level}</span>";
+    }
+
+    echo "</td>";
     echo "<td>" . htmlspecialchars($row['def']) . "</td>";
     echo "<td>" . htmlspecialchars($row['ex']) . "</td>";
     echo "<td>" . htmlspecialchars($row['question']) . "</td>";

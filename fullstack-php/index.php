@@ -430,7 +430,7 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
                         <button class="custom-btn" onclick='redirectToPracticeDraft(<?= json_encode($def) ?>, <?= json_encode($vocab) ?>)'>
                             <img src="assets/homework.png" alt="Practice Draft">
                         </button>
-                        <button class="custom-btn" onclick='fillEditModal(<?= $rowId ?>, <?= json_encode($vocab) ?>, <?= json_encode($partOfSpeech) ?>, <?= json_encode($ipa) ?>, <?= json_encode($def) ?>, <?= json_encode($ex) ?>, <?= json_encode($question) ?>, <?= json_encode($answer) ?>, <?= json_encode($imagePath) ?>, <?= json_encode($videoPath) ?>, <?= json_encode($audioPath) ?>, <?= $isActive ?>)'>
+                        <button class="custom-btn" onclick='fillEditModal(<?= $rowId ?>, <?= json_encode($vocab) ?>, <?= json_encode($partOfSpeech) ?>, <?= json_encode($ipa) ?>, <?= json_encode($def) ?>, <?= json_encode($ex) ?>, <?= json_encode($question) ?>, <?= json_encode($answer) ?>, <?= json_encode($imagePath) ?>, <?= json_encode($videoPath) ?>, <?= json_encode($audioPath) ?>, <?= $isActive ?>, <?= (int)$row['level'] ?>)'>
                             <img src="assets/edit.png" alt="Edit">
                         </button>
                         <button class="custom-btn"
@@ -445,6 +445,9 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
                     <td>
                         <span class="status-indicator <?= $isActive ? 'status-active' : 'status-inactive' ?>"></span>
                         <?= $vocab ?> <?= $partOfSpeech ?><br><?= $ipa ?>
+                        <?php if ((int)$row['level'] > 0): ?>
+                            <br><span class="badge badge-info">Level: <?= (int)$row['level'] ?></span>
+                        <?php endif; ?>
                     </td>
                     <td><?= $def ?></td>
                     <td><?= $ex ?></td>
@@ -609,9 +612,17 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
                             <label for="editExample">Example</label>
                             <textarea class="form-control soft-input" id="editExample" name="editExample" rows="2"></textarea>
                         </div>
-                        <div class="form-group form-check">
+                        <div class="form-check form-group">
                             <input type="checkbox" class="form-check-input" id="editIsActive" name="editIsActive">
                             <label class="form-check-label" for="editIsActive">Active (visible in app)</label>
+                        </div>
+                        <!-- Add level information and reset checkbox -->
+                        <div class="form-group" id="levelInfoContainer">
+                            <div id="levelInfo">Current Level: <span id="currentLevel">0</span></div>
+                            <div class="form-check" id="resetLevelContainer" style="display: none;">
+                                <input type="checkbox" class="form-check-input" id="resetLevel" name="resetLevel">
+                                <label class="form-check-label" for="resetLevel">Reset Level and Stats</label>
+                            </div>
                         </div>
                     </div>
                     <div class="right-form">
@@ -791,7 +802,7 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
         return textArea.value;
     }
 
-    function fillEditModal(id, vocab, partOfSpeech, ipa, def, ex, question, answer, imagePath, videoPath, audioPath, isActive = 0) {
+    function fillEditModal(id, vocab, partOfSpeech, ipa, def, ex, question, answer, imagePath, videoPath, audioPath, isActive = 0, level = 0) {
         document.getElementById('editId').value = id;
         document.getElementById('editVocab').value = decodeHTMLEntities(vocab);
         document.getElementById('editPartOfSpeech').value = decodeHTMLEntities(partOfSpeech);
@@ -803,6 +814,18 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
 
         // Set the active checkbox state
         document.getElementById('editIsActive').checked = (isActive === 1);
+
+        // Update level information
+        document.getElementById('currentLevel').textContent = level;
+
+        // Show or hide reset level checkbox based on level value
+        const resetLevelContainer = document.getElementById('resetLevelContainer');
+        if (level > 0) {
+            resetLevelContainer.style.display = 'block';
+        } else {
+            resetLevelContainer.style.display = 'none';
+            document.getElementById('resetLevel').checked = false; // Ensure it's unchecked when hidden
+        }
 
         // Display file previews if available
         displayFilePreview(imagePath, 'editImagePreview');

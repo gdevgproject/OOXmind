@@ -20,15 +20,17 @@ if (isset($_POST['update'])) {
     $newQuestion = $_POST['editQuestion'];
     $newAnswer = $_POST['editAnswer'];
     $isActive = isset($_POST['editIsActive']) ? 1 : 0;  // Check if the checkbox was checked
+    $resetLevel = isset($_POST['resetLevel']) ? 1 : 0;  // Check if reset level was selected
     $currentUrl = $_POST['currentUrl'];
 
     // Kết nối cơ sở dữ liệu một lần
     $pdo = pdo_get_connection();
 
-    // Lấy đường dẫn file hiện tại từ cơ sở dữ liệu
-    $stmt = $pdo->prepare("SELECT image_path, video_path, audio_path FROM content WHERE content_id = ?");
+    // Lấy đường dẫn file hiện tại và create_time từ cơ sở dữ liệu
+    $stmt = $pdo->prepare("SELECT image_path, video_path, audio_path, create_time FROM content WHERE content_id = ?");
     $stmt->execute([$id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $createTime = $row['create_time'];
 
     // Xử lý file mới được upload (nếu có)
     $timestamp = date('s_i_G_j_n_Y');
@@ -57,9 +59,34 @@ if (isset($_POST['update'])) {
         move_uploaded_file($_FILES['editAudio']['tmp_name'], $newAudioPath);
     }
 
-    // Cập nhật cơ sở dữ liệu, including is_active field
-    $stmt = $pdo->prepare("UPDATE content SET vocab=?, part_of_speech=?, ipa=?, def=?, ex=?, question=?, answer=?, image_path=?, video_path=?, audio_path=?, is_active=? WHERE content_id=?");
-    $stmt->execute([$newVocab, $newPartOfSpeech, $newIPA, $newDef, $newExample, $newQuestion, $newAnswer, $newImagePath, $newVideoPath, $newAudioPath, $isActive, $id]);
+    // If reset level is checked, update additional fields to reset values
+    if ($resetLevel) {
+        $stmt = $pdo->prepare("UPDATE content SET vocab=?, part_of_speech=?, ipa=?, def=?, ex=?, question=?, answer=?, 
+                              image_path=?, video_path=?, audio_path=?, is_active=?, 
+                              level=0, correct_count=0, incorrect_count=0, response_time=0, is_recovery=0, 
+                              last_review=?, next_review=? 
+                              WHERE content_id=?");
+        $stmt->execute([
+            $newVocab,
+            $newPartOfSpeech,
+            $newIPA,
+            $newDef,
+            $newExample,
+            $newQuestion,
+            $newAnswer,
+            $newImagePath,
+            $newVideoPath,
+            $newAudioPath,
+            $isActive,
+            $createTime,
+            $createTime,
+            $id
+        ]);
+    } else {
+        // Standard update without resetting level and stats
+        $stmt = $pdo->prepare("UPDATE content SET vocab=?, part_of_speech=?, ipa=?, def=?, ex=?, question=?, answer=?, image_path=?, video_path=?, audio_path=?, is_active=? WHERE content_id=?");
+        $stmt->execute([$newVocab, $newPartOfSpeech, $newIPA, $newDef, $newExample, $newQuestion, $newAnswer, $newImagePath, $newVideoPath, $newAudioPath, $isActive, $id]);
+    }
 
     // Chuyển hướng sau khi cập nhật về URL ban đầu
     header("Location: " . $currentUrl);
