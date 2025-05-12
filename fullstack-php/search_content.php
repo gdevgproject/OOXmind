@@ -100,14 +100,18 @@ if (isset($_GET['q'])) {
             background-color: #F44336;
         }
         
-        .badge-info {
-            background-color: #17a2b8;
-            color: white;
+        .badge-level {
+            display: inline-block;
             padding: 3px 7px;
             border-radius: 10px;
             font-size: 0.8rem;
-            display: inline-block;
-            margin-top: 3px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: white;
+            background-color: #17a2b8;
+            box-shadow: 0 0 8px rgba(23, 162, 184, 0.7);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
     </style>";
 
@@ -196,7 +200,7 @@ function echoRow($row, &$count, $filter)
 
     // Display level badge if level > 0
     if ($level > 0) {
-        echo "<br><span class='badge badge-info'>Level: {$level}</span>";
+        echo "<br><span class='badge-level'>Level: {$level}</span>";
     }
 
     echo "</td>";

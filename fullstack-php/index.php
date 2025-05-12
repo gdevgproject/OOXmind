@@ -287,6 +287,21 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
         margin-top: 20px;
     }
 
+    /* Level badge styling */
+    .badge-level {
+        display: inline-block;
+        padding: 3px 7px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin-top: 5px;
+        color: white;
+        background-color: #17a2b8;
+        box-shadow: 0 0 8px rgba(23, 162, 184, 0.7);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
     /* Active and Inactive Vocabulary Styling */
     tr.active-vocab {
         background-color: rgba(164, 231, 176, 0.3);
@@ -446,7 +461,7 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
                         <span class="status-indicator <?= $isActive ? 'status-active' : 'status-inactive' ?>"></span>
                         <?= $vocab ?> <?= $partOfSpeech ?><br><?= $ipa ?>
                         <?php if ((int)$row['level'] > 0): ?>
-                            <br><span class="badge badge-info">Level: <?= (int)$row['level'] ?></span>
+                            <br><span class="badge-level">Level: <?= (int)$row['level'] ?></span>
                         <?php endif; ?>
                     </td>
                     <td><?= $def ?></td>
