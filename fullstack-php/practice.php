@@ -1,6 +1,5 @@
 <?php
-include 'view/header.php';
-
+require_once 'model/pdo.php';
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 $currentDateTime = date("Y-m-d H:i:s");
@@ -14,11 +13,15 @@ $stmt->bindParam(':currentDateTime', $currentDateTime, PDO::PARAM_STR);
 $stmt->execute();
 $contentData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-
+// Check if there's no content data BEFORE any output is sent
 if (empty($contentData)) {
-    header('Location: home.php');
+    // Use JavaScript for redirection since we might have already sent headers
+    echo "<script>window.location.href = 'home.php';</script>";
     exit;
 }
+
+// Only include header.php after checking for empty data
+include 'view/header.php';
 
 $totalVocabulary = count($contentData);
 ?>
