@@ -273,7 +273,7 @@ $levelPercent = number_format($levelPercent, 2);
 
 
 // Calculate the folder size
-$projectFolderPath = 'D:\myproject\project\OOXmind';
+$projectFolderPath = dirname(__DIR__); // This will get the parent directory of 'view' folder
 $folderSizeBytes = getFolderSize($projectFolderPath);
 $folderSizeGB = $folderSizeBytes / (1024 ** 3);
 
@@ -282,7 +282,7 @@ $vocabCreatedCountToday = getVocabCreatedCountToday($conn);
 
 
 // Image Background Feature
-$imageFolder = "assets/picture_background/";
+$imageFolder = "assets/girl_background/";
 $images = [];
 $files = scandir($imageFolder);
 
