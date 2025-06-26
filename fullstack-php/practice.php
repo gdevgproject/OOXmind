@@ -374,6 +374,18 @@ $totalVocabulary = count($contentData);
                             <textarea class="form-control soft-input" id="editExample" name="editExample"
                                 rows="2"></textarea>
                         </div>
+                        <div class="form-check form-group">
+                            <input type="checkbox" class="form-check-input" id="editIsActive" name="editIsActive">
+                            <label class="form-check-label" for="editIsActive">Active (visible in app)</label>
+                        </div>
+                        <!-- Add level information and reset checkbox -->
+                        <div class="form-group" id="levelInfoContainer">
+                            <div id="levelInfo">Current Level: <span id="currentLevel">0</span></div>
+                            <div class="form-check" id="resetLevelContainer" style="display: none;">
+                                <input type="checkbox" class="form-check-input" id="resetLevel" name="resetLevel">
+                                <label class="form-check-label" for="resetLevel">Reset Level and Stats</label>
+                            </div>
+                        </div>
                     </div>
                     <div class="right-form">
                         <div class="form-group">
@@ -761,6 +773,24 @@ $totalVocabulary = count($contentData);
         document.getElementById('editExample').value = ex;
         document.getElementById('editQuestion').value = question;
         document.getElementById('editAnswer').value = answer;
+
+        // Get current content data for active status and level
+        let currentContent = contentData[currentIndex];
+
+        // Set the active checkbox state
+        document.getElementById('editIsActive').checked = (currentContent.is_active == 1);
+
+        // Update level information
+        document.getElementById('currentLevel').textContent = currentContent.level || 0;
+
+        // Show or hide reset level checkbox based on level value
+        const resetLevelContainer = document.getElementById('resetLevelContainer');
+        if (currentContent.level > 0) {
+            resetLevelContainer.style.display = 'block';
+        } else {
+            resetLevelContainer.style.display = 'none';
+            document.getElementById('resetLevel').checked = false;
+        }
 
         // Hiển thị bản xem trước của file nếu có
         displayFilePreview(imagePath, 'editImagePreview');
