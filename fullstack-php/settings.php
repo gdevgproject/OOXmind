@@ -383,6 +383,134 @@ if (file_exists('assets/music_settings.json')) {
       background: #c0392b;
     }
 
+    /* User Name Settings Styles */
+    .name-settings {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .name-input-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .name-input {
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 12px;
+      border: 3px solid #3498db;
+      font-size: 18px;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+    }
+
+    .name-input:focus {
+      outline: none;
+      border-color: #2980b9;
+      box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .name-preview {
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      color: white;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .name-preview:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .name-buttons {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .save-name-btn,
+    .reset-name-btn {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .save-name-btn:hover {
+      background: #229954;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .reset-name-btn {
+      background: #e67e22;
+    }
+
+    .reset-name-btn:hover {
+      background: #d35400;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(230, 126, 34, 0.3);
+    }
+
+    .name-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .suggestion-btn {
+      background: rgba(155, 89, 182, 0.2);
+      border: 2px solid #9b59b6;
+      color: #8e44ad;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .suggestion-btn:hover {
+      background: #9b59b6;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .character-count {
+      font-size: 12px;
+      color: #7f8c8d;
+      text-align: right;
+      margin-top: 5px;
+    }
+
+    .character-count.warning {
+      color: #e67e22;
+    }
+
+    .character-count.error {
+      color: #e74c3c;
+    }
+
     @media (max-width: 768px) {
       .music-settings {
         grid-template-columns: 1fr;
@@ -401,6 +529,15 @@ if (file_exists('assets/music_settings.json')) {
         margin-left: 0;
         margin-top: 10px;
       }
+
+      .name-buttons {
+        flex-direction: column;
+      }
+
+      .save-name-btn,
+      .reset-name-btn {
+        min-width: unset;
+      }
     }
   </style>
 </head>
@@ -418,6 +555,37 @@ if (file_exists('assets/music_settings.json')) {
     <?php if (isset($error)): ?>
       <div class="alert alert-error"><?php echo $error; ?></div>
     <?php endif; ?>
+
+    <!-- User Name Settings Section -->
+    <div class="settings-section">
+      <h2 class="section-title">👤 User Name Settings</h2>
+
+      <div class="name-settings">
+        <div class="name-input-container">
+          <label for="userName" style="font-weight: bold; color: #2c3e50; font-size: 16px;">Enter Your Name:</label>
+          <input type="text" id="userName" class="name-input" placeholder="Your Name" maxlength="30">
+          <div class="character-count" id="charCount">0/30 characters</div>
+        </div>
+
+        <div class="name-preview" id="namePreview">
+          <span>👋 Hello, </span><span id="previewName">Your Name</span><span>!</span>
+        </div>
+
+        <div class="name-suggestions">
+          <p style="width: 100%; margin: 0 0 10px 0; font-weight: bold; color: #7f8c8d;">Quick suggestions:</p>
+          <button type="button" class="suggestion-btn" onclick="setSuggestedName('Admin')">Admin</button>
+          <button type="button" class="suggestion-btn" onclick="setSuggestedName('Student')">Student</button>
+          <button type="button" class="suggestion-btn" onclick="setSuggestedName('Learner')">Learner</button>
+          <button type="button" class="suggestion-btn" onclick="setSuggestedName('Master')">Master</button>
+          <button type="button" class="suggestion-btn" onclick="setSuggestedName('Scholar')">Scholar</button>
+        </div>
+
+        <div class="name-buttons">
+          <button type="button" class="save-name-btn" onclick="saveUserName()">💾 Save Name</button>
+          <button type="button" class="reset-name-btn" onclick="resetUserName()">🔄 Reset to Default</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Background Images Section -->
     <div class="settings-section">
@@ -566,6 +734,122 @@ if (file_exists('assets/music_settings.json')) {
   </div>
 
   <script>
+    // User Name Management
+    document.addEventListener('DOMContentLoaded', function() {
+      loadEffectsSettings();
+      loadCurrentUserName();
+      setupNameInput();
+    });
+
+    function loadCurrentUserName() {
+      const savedName = localStorage.getItem('userName') || 'Your Name';
+      const nameInput = document.getElementById('userName');
+      const previewName = document.getElementById('previewName');
+
+      nameInput.value = savedName;
+      previewName.textContent = savedName;
+      updateCharacterCount();
+    }
+
+    function setupNameInput() {
+      const nameInput = document.getElementById('userName');
+      const previewName = document.getElementById('previewName');
+
+      nameInput.addEventListener('input', function() {
+        const value = this.value.trim() || 'Your Name';
+        previewName.textContent = value;
+        updateCharacterCount();
+      });
+    }
+
+    function updateCharacterCount() {
+      const nameInput = document.getElementById('userName');
+      const charCount = document.getElementById('charCount');
+      const length = nameInput.value.length;
+
+      charCount.textContent = `${length}/30 characters`;
+
+      if (length > 25) {
+        charCount.className = 'character-count error';
+      } else if (length > 20) {
+        charCount.className = 'character-count warning';
+      } else {
+        charCount.className = 'character-count';
+      }
+    }
+
+    function setSuggestedName(name) {
+      const nameInput = document.getElementById('userName');
+      const previewName = document.getElementById('previewName');
+
+      nameInput.value = name;
+      previewName.textContent = name;
+      updateCharacterCount();
+
+      // Add visual feedback
+      nameInput.style.borderColor = '#27ae60';
+      setTimeout(() => {
+        nameInput.style.borderColor = '#3498db';
+      }, 1000);
+    }
+
+    function saveUserName() {
+      const nameInput = document.getElementById('userName');
+      const name = nameInput.value.trim();
+
+      if (name.length === 0) {
+        showTemporaryMessage('Please enter a name!', 'error');
+        return;
+      }
+
+      if (name.length > 30) {
+        showTemporaryMessage('Name is too long! Maximum 30 characters.', 'error');
+        return;
+      }
+
+      localStorage.setItem('userName', name);
+
+      // Broadcast name change to other pages
+      window.dispatchEvent(new CustomEvent('userNameChanged', {
+        detail: {
+          name: name
+        }
+      }));
+
+      showTemporaryMessage(`Name saved successfully! Welcome, ${name}! 🎉`, 'success');
+
+      // Visual feedback
+      const saveBtn = document.querySelector('.save-name-btn');
+      const originalText = saveBtn.innerHTML;
+      saveBtn.innerHTML = '✅ Saved!';
+      saveBtn.style.background = '#27ae60';
+
+      setTimeout(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.style.background = '#27ae60';
+      }, 2000);
+    }
+
+    function resetUserName() {
+      const nameInput = document.getElementById('userName');
+      const previewName = document.getElementById('previewName');
+
+      nameInput.value = 'Your Name';
+      previewName.textContent = 'Your Name';
+      updateCharacterCount();
+
+      localStorage.setItem('userName', 'Your Name');
+
+      // Broadcast name change
+      window.dispatchEvent(new CustomEvent('userNameChanged', {
+        detail: {
+          name: 'Your Name'
+        }
+      }));
+
+      showTemporaryMessage('Name reset to default!', 'success');
+    }
+
     // Preview music when selection changes
     document.querySelectorAll('.music-select').forEach(select => {
       select.addEventListener('change', function() {

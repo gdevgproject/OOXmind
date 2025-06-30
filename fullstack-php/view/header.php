@@ -505,6 +505,27 @@ $randomImage = $images[array_rand($images)];
             // Apply initial effects settings
             applyEffectsSettings(effectsSettings);
 
+            // Load and apply saved user name
+            loadUserName();
+
+            function loadUserName() {
+                const savedName = localStorage.getItem('userName');
+                const nameElement = document.querySelector('.user-name');
+                if (savedName && nameElement) {
+                    nameElement.textContent = savedName;
+                } else if (nameElement) {
+                    nameElement.textContent = 'Your Name';
+                }
+            }
+
+            // Listen for name changes from settings page
+            window.addEventListener('userNameChanged', function(event) {
+                const nameElement = document.querySelector('.user-name');
+                if (nameElement) {
+                    nameElement.textContent = event.detail.name;
+                }
+            });
+
             function getEffectsSettings() {
                 const defaultSettings = {
                     enableAnimation: true,
