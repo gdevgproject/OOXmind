@@ -70,22 +70,6 @@ try {
         color: red;
     }
 
-    /* Định dạng nút Practice */
-    #practiceButton {
-        margin-right: 10px;
-        /* Khoảng cách bên phải */
-    }
-
-    /* Màu chữ cho trạng thái practice */
-    .practice-text {
-        color: green;
-    }
-
-    /* Màu chữ khi không trong trạng thái practice */
-    .non-practice-text {
-        color: black;
-    }
-
     /* Màu chữ cho trạng thái theory */
     .theory-text-green {
         color: green;
@@ -103,15 +87,9 @@ try {
                 </div>
                 <div class="col-md-11">
                     <div class="d-flex justify-content-md-end align-items-center h-100">
-                        <!-- Nút Practice -->
-                        <button class="custom-big-btn" id="practiceButton"
-                            onclick="practiceFunction()">PRACTICE</button>
-
                         <button class="custom-big-btn" id="theoryButton" onclick="toggleTheoryMode()">THEORY</button>
-
                     </div>
                 </div>
-
             </div>
             <div class="custom-div text-center">
                 <div class="input-group">
@@ -139,10 +117,7 @@ try {
     let answerHistory = '';
     const audio = new Audio('assets/audio/ngamphaohoa.mp3');
     audio.loop = true;
-    let isPracticing = false;
     let isTheoryMode = false;
-    let currentVocabIndex = 0;
-    let vocabData = [];
 
     // Bắt đầu phát audio nếu play là true
     if (true) {
@@ -170,7 +145,6 @@ try {
         inputField.focus();
         continueButton.disabled = true;
     }
-
 
     function incrementCount() {
         // Lấy các phần tử cần thiết từ DOM
@@ -232,7 +206,6 @@ try {
         }
     }
 
-
     document.addEventListener('DOMContentLoaded', () => {
         // Focus vào ô nhập câu mẫu ngay khi trang được tải
         const patternInput = document.getElementById('patternInput');
@@ -243,7 +216,7 @@ try {
         patternInput.focus();
 
         // Lắng nghe sự kiện khi ô textarea mất focus
-        patternInput.addEventListener('blur', function () {
+        patternInput.addEventListener('blur', function() {
             // Lưu nội dung của ô textarea vào biến pattern
             pattern = this.value;
         });
@@ -271,8 +244,8 @@ try {
         patternInput.addEventListener('input', adjustTextareaHeight);
 
         // Gắn các hàm vào sự kiện click của nút
-        hideButton.addEventListener('click', hidePattern);
-        showButton.addEventListener('click', showPattern);
+        if (hideButton) hideButton.addEventListener('click', hidePattern);
+        if (showButton) showButton.addEventListener('click', showPattern);
     });
 
     // Hàm xử lý sự kiện khi ấn nút Enter trong ô textarea
@@ -316,53 +289,6 @@ try {
     // Đăng ký sự kiện input cho ô input-field
     document.getElementById('input-field').addEventListener('input', handleInputChange);
 
-    // Hàm để xử lý phản hồi từ máy chủ khi lấy dữ liệu từ vựng
-    function handleVocabResponse(response) {
-        if (response.length > 0) {
-            const def = response[0]['def']; // Lấy dữ liệu định nghĩa từ từ vựng đầu tiên
-            currentVocab = def; // Gán giá trị từ vựng vào biến global
-            document.getElementById('patternInput').value = def; // Hiển thị dữ liệu trong textarea theory
-            console.log("Dữ liệu từ vựng đã lấy xuống:", response);
-        } else {
-            console.log("Không có từ vựng nào được trả về.");
-        }
-    }
-
-
-
-    // Hàm gửi yêu cầu lấy dữ liệu từ cơ sở dữ liệu
-    function fetchVocabData() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'get_vocab_for_practice.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                vocabData = response; // Gán dữ liệu từ vựng cho biến vocabData
-                handleVocabResponse(response);
-            }
-        };
-        xhr.send('practice=true');
-    }
-
-    // Hàm xử lý khi nhấn nút Practice
-    function practiceFunction() {
-        isPracticing = !isPracticing; // Đảo ngược trạng thái practice
-        console.log(isPracticing ? "Bắt đầu chế độ practice" : "Thoát khỏi chế độ practice");
-
-        if (isPracticing) {
-            fetchVocabData(); // Gửi yêu cầu lấy dữ liệu từ vựng
-            document.getElementById('input-field').focus(); // Focus vào ô textarea Practice
-        }
-
-        // Cập nhật lớp CSS cho nút "Practice"
-        const practiceButton = document.getElementById('practiceButton');
-        practiceButton.classList.toggle('practice-text', isPracticing);
-        practiceButton.classList.toggle('non-practice-text', !isPracticing);
-    }
-
-
-
     // Hàm xử lý khi nhấp vào nút Theory
     function toggleTheoryMode() {
         // Đảo ngược trạng thái theory
@@ -382,79 +308,7 @@ try {
     }
 
     function checkFunction() {
-        const input = document.getElementById('input-field');
-        const historyTextarea = document.getElementById('history-field');
-        const countDisplay = document.getElementById('count-display');
-
-        // Hiển thị textarea history
-        historyTextarea.style.display = 'block';
-
-        // Kiểm tra xem có đang trong trạng thái practice không
-        if (isPracticing) {
-            const practiceInput = input.value.trim();
-            const answerHistory = historyTextarea.value.trim();
-
-            // Cập nhật lịch sử trả lời
-            historyTextarea.value = `${answerHistory}${answerHistory ? '\n' : ''}${practiceInput}`;
-            historyTextarea.scrollTop = historyTextarea.scrollHeight;
-
-            // Kiểm tra sự khớp với từ vựng hiện tại
-            if (practiceInput === vocabData[currentVocabIndex].vocab) {
-                handleCorrectAnswer(countDisplay);
-            } else {
-                handleIncorrectAnswer(countDisplay);
-            }
-
-            // Xóa bỏ nội dung của ô practice
-            input.value = '';
-
-            // Gửi yêu cầu Ajax để cập nhật giá trị count trên máy chủ
-            updateCount(countDisplay);
-        } else {
-            // Nếu không đang trong trạng thái practice, tiếp tục thực hiện tính năng đã xây dựng trước đó
-            incrementCount();
-        }
-    }
-
-    function handleCorrectAnswer(countDisplay) {
-        countDisplay.style.color = 'green';
-        setTimeout(() => {
-            countDisplay.style.color = 'black';
-        }, 500);
-
-        new Audio('assets/audio/correct_sound.mp3').play();
-
-        // Tăng chỉ số vocab hiện tại và reset nếu cần
-        currentVocabIndex = (currentVocabIndex + 1) % vocabData.length;
-
-        // Cập nhật nội dung theory
-        document.getElementById('patternInput').value = vocabData[currentVocabIndex].def;
-        console.log("Đúng");
-    }
-
-    function handleIncorrectAnswer(countDisplay) {
-        countDisplay.style.color = 'red';
-        countDisplay.classList.add("pulsate");
-        new Audio('assets/audio/incorrect_sound.mp3').play();
-        console.log("Nội dung không khớp với từ vựng hiện tại.");
-        console.log("Sai");
-    }
-
-    function updateCount(countDisplay) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'update_count.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                const response = xhr.responseText;
-                if (!isNaN(response)) {
-                    countDisplay.innerText = response;
-                } else {
-                    console.error('Lỗi khi cập nhật count trên máy chủ.');
-                }
-            }
-        };
-        xhr.send('count=1');
+        incrementCount();
     }
 
     // Kiểm tra xem biến combinedString đã được tạo ra từ PHP chưa
@@ -462,10 +316,9 @@ try {
         document.getElementById('patternInput').value = '<?php echo $vocab; ?>';
     }
 
-    window.onload = function () {
+    window.onload = function() {
         toggleTheoryMode();
     };
-
 </script>
 
 </html>
