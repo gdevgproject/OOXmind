@@ -340,11 +340,17 @@ $randomImage = $images[array_rand($images)];
             top: 0;
             left: 0;
             z-index: -1;
+            will-change: transform;
+            /* filter: brightness(0.85); */
+        }
+
+        #myImage.effects-enabled {
             transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
             animation: animateImage 40s infinite alternate;
-            will-change: transform;
-            /* Optimize performance */
-            /* filter: brightness(0.85); */
+        }
+
+        #myImage.transition-enabled {
+            transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
         }
 
         #myImage.transitioning {
@@ -493,28 +499,112 @@ $randomImage = $images[array_rand($images)];
             var images = <?php echo json_encode($images); ?>;
             var imageElement = document.getElementById('myImage');
             var currentImageIndex = 0;
+            var changeImageInterval;
+            var effectsSettings = getEffectsSettings();
+
+            // Apply initial effects settings
+            applyEffectsSettings(effectsSettings);
+
+            function getEffectsSettings() {
+                const defaultSettings = {
+                    enableAnimation: true,
+                    enableTransition: true,
+                    enableParallax: true,
+                    enableAutoChange: true,
+                    enableBlur: true
+                };
+
+                const savedSettings = localStorage.getItem('backgroundEffectsSettings');
+                return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+            }
+
+            function applyEffectsSettings(settings) {
+                // Apply animation effects
+                if (settings.enableAnimation) {
+                    imageElement.classList.add('effects-enabled');
+                } else {
+                    imageElement.classList.remove('effects-enabled');
+                }
+
+                // Apply transition effects
+                if (settings.enableTransition) {
+                    imageElement.classList.add('transition-enabled');
+                } else {
+                    imageElement.classList.remove('transition-enabled');
+                }
+
+                // Apply blur effects to elements
+                const blurElements = document.querySelectorAll('.settings-container, .settings-section');
+                blurElements.forEach(element => {
+                    if (settings.enableBlur) {
+                        element.style.backdropFilter = 'blur(10px)';
+                    } else {
+                        element.style.backdropFilter = 'none';
+                    }
+                });
+
+                // Handle auto image change
+                if (settings.enableAutoChange) {
+                    startImageChangeInterval();
+                } else {
+                    stopImageChangeInterval();
+                }
+            }
+
+            function startImageChangeInterval() {
+                if (changeImageInterval) clearInterval(changeImageInterval);
+                changeImageInterval = setInterval(changeImageWithTransition, 10000);
+            }
+
+            function stopImageChangeInterval() {
+                if (changeImageInterval) {
+                    clearInterval(changeImageInterval);
+                    changeImageInterval = null;
+                }
+            }
 
             function changeImageWithTransition() {
+                var settings = getEffectsSettings();
                 var newImage = images[currentImageIndex];
-                imageElement.classList.add('transitioning');
-                setTimeout(function() {
+
+                if (settings.enableTransition) {
+                    imageElement.classList.add('transitioning');
+                    setTimeout(function() {
+                        imageElement.src = newImage;
+                        imageElement.classList.remove('transitioning');
+                        currentImageIndex++;
+                        if (currentImageIndex >= images.length) {
+                            currentImageIndex = 0;
+                        }
+                    }, 700);
+                } else {
                     imageElement.src = newImage;
-                    imageElement.classList.remove('transitioning');
                     currentImageIndex++;
                     if (currentImageIndex >= images.length) {
                         currentImageIndex = 0;
                     }
-                }, 700);
+                }
             }
 
-            setInterval(changeImageWithTransition, 10000);
-        });
+            // Listen for settings changes
+            window.addEventListener('backgroundEffectsChanged', function(event) {
+                effectsSettings = event.detail;
+                applyEffectsSettings(effectsSettings);
+            });
 
-        window.addEventListener('scroll', function() {
-            var scrolled = window.pageYOffset;
-            var image = document.getElementById('myImage');
-            var rate = scrolled * -0.2; // Giảm tốc độ để tránh cảm giác chóng mặt
-            image.style.transform = 'translateY(' + rate + 'px)';
+            // Handle parallax scrolling
+            window.addEventListener('scroll', function() {
+                var settings = getEffectsSettings();
+                if (settings.enableParallax) {
+                    var scrolled = window.pageYOffset;
+                    var image = document.getElementById('myImage');
+                    var rate = scrolled * -0.2;
+                    image.style.transform = 'translateY(' + rate + 'px)';
+                } else {
+                    var image = document.getElementById('myImage');
+                    image.style.transform = 'none';
+                }
+            });
         });
     </script>
     <script defer>

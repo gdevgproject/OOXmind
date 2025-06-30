@@ -280,6 +280,109 @@ if (file_exists('assets/music_settings.json')) {
       color: white;
     }
 
+    .effects-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .effect-item {
+      display: flex;
+      align-items: center;
+      padding: 20px;
+      background: rgba(52, 152, 219, 0.1);
+      border-radius: 10px;
+      border: 2px solid #3498db;
+    }
+
+    .effect-info {
+      margin-left: 20px;
+      flex: 1;
+    }
+
+    .effect-info h4 {
+      margin: 0 0 5px 0;
+      color: #2c3e50;
+      font-size: 16px;
+    }
+
+    .effect-info p {
+      margin: 0;
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: #3498db;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(26px);
+    }
+
+    .save-effects-btn,
+    .reset-effects-btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 10px;
+      margin-top: 20px;
+    }
+
+    .save-effects-btn:hover {
+      background: #2980b9;
+    }
+
+    .reset-effects-btn {
+      background: #e74c3c;
+    }
+
+    .reset-effects-btn:hover {
+      background: #c0392b;
+    }
+
     @media (max-width: 768px) {
       .music-settings {
         grid-template-columns: 1fr;
@@ -287,6 +390,16 @@ if (file_exists('assets/music_settings.json')) {
 
       .image-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+
+      .effect-item {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .effect-info {
+        margin-left: 0;
+        margin-top: 10px;
       }
     }
   </style>
@@ -380,6 +493,71 @@ if (file_exists('assets/music_settings.json')) {
       </form>
     </div>
 
+    <!-- Background Effects Settings Section -->
+    <div class="settings-section">
+      <h2 class="section-title">✨ Background Effects Settings</h2>
+
+      <div class="effects-grid">
+        <div class="effect-item">
+          <label class="switch">
+            <input type="checkbox" id="enableAnimation" checked>
+            <span class="slider"></span>
+          </label>
+          <div class="effect-info">
+            <h4>Animation Effects</h4>
+            <p>Enable/disable scaling, rotation and movement animations</p>
+          </div>
+        </div>
+
+        <div class="effect-item">
+          <label class="switch">
+            <input type="checkbox" id="enableTransition" checked>
+            <span class="slider"></span>
+          </label>
+          <div class="effect-info">
+            <h4>Image Transitions</h4>
+            <p>Smooth fade transitions between background images</p>
+          </div>
+        </div>
+
+        <div class="effect-item">
+          <label class="switch">
+            <input type="checkbox" id="enableParallax" checked>
+            <span class="slider"></span>
+          </label>
+          <div class="effect-info">
+            <h4>Parallax Scrolling</h4>
+            <p>Background moves at different speed when scrolling</p>
+          </div>
+        </div>
+
+        <div class="effect-item">
+          <label class="switch">
+            <input type="checkbox" id="enableAutoChange" checked>
+            <span class="slider"></span>
+          </label>
+          <div class="effect-info">
+            <h4>Auto Image Change</h4>
+            <p>Automatically change background images every 10 seconds</p>
+          </div>
+        </div>
+
+        <div class="effect-item">
+          <label class="switch">
+            <input type="checkbox" id="enableBlur" checked>
+            <span class="slider"></span>
+          </label>
+          <div class="effect-info">
+            <h4>Blur Effect</h4>
+            <p>Apply backdrop blur effect to interface elements</p>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="save-effects-btn" onclick="saveEffectsSettings()">Save Effects Settings</button>
+      <button type="button" class="reset-effects-btn" onclick="resetEffectsSettings()">Reset to Default</button>
+    </div>
+
     <!-- Future Settings Placeholder -->
     <div class="settings-section">
       <h2 class="section-title">🔧 General Settings</h2>
@@ -407,6 +585,89 @@ if (file_exists('assets/music_settings.json')) {
         setTimeout(() => alert.remove(), 500);
       });
     }, 5000);
+
+    // Load saved effects settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadEffectsSettings();
+    });
+
+    function loadEffectsSettings() {
+      const defaultSettings = {
+        enableAnimation: true,
+        enableTransition: true,
+        enableParallax: true,
+        enableAutoChange: true,
+        enableBlur: true
+      };
+
+      const savedSettings = localStorage.getItem('backgroundEffectsSettings');
+      const settings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+
+      // Apply settings to checkboxes
+      Object.keys(settings).forEach(key => {
+        const checkbox = document.getElementById(key);
+        if (checkbox) {
+          checkbox.checked = settings[key];
+        }
+      });
+    }
+
+    function saveEffectsSettings() {
+      const settings = {
+        enableAnimation: document.getElementById('enableAnimation').checked,
+        enableTransition: document.getElementById('enableTransition').checked,
+        enableParallax: document.getElementById('enableParallax').checked,
+        enableAutoChange: document.getElementById('enableAutoChange').checked,
+        enableBlur: document.getElementById('enableBlur').checked
+      };
+
+      localStorage.setItem('backgroundEffectsSettings', JSON.stringify(settings));
+
+      // Broadcast settings change to other pages
+      window.dispatchEvent(new CustomEvent('backgroundEffectsChanged', {
+        detail: settings
+      }));
+
+      // Show success message
+      showTemporaryMessage('Effects settings saved successfully!', 'success');
+    }
+
+    function resetEffectsSettings() {
+      const defaultSettings = {
+        enableAnimation: true,
+        enableTransition: true,
+        enableParallax: true,
+        enableAutoChange: true,
+        enableBlur: true
+      };
+
+      localStorage.setItem('backgroundEffectsSettings', JSON.stringify(defaultSettings));
+      loadEffectsSettings();
+
+      // Broadcast settings change
+      window.dispatchEvent(new CustomEvent('backgroundEffectsChanged', {
+        detail: defaultSettings
+      }));
+
+      showTemporaryMessage('Effects settings reset to default!', 'success');
+    }
+
+    function showTemporaryMessage(message, type) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type}`;
+      alertDiv.textContent = message;
+
+      const container = document.querySelector('.settings-container');
+      container.insertBefore(alertDiv, container.firstChild);
+
+      setTimeout(() => {
+        alertDiv.style.opacity = '0';
+        alertDiv.style.transition = 'opacity 0.5s';
+        setTimeout(() => alertDiv.remove(), 500);
+      }, 3000);
+    }
+
+    // ...existing code...
   </script>
 </body>
 
