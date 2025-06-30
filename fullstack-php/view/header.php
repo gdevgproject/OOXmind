@@ -754,7 +754,7 @@ $randomImage = $images[array_rand($images)];
             </section>
         </section>
 
-        <a href="./index.php" class="profile">
+        <a href="./settings.php" class="profile">
             <img src="./assets/minh.jpg" alt="user image">
         </a>
         <ul class="avt-list text-shadow">
