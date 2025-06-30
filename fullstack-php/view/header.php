@@ -528,26 +528,53 @@ $randomImage = $images[array_rand($images)];
             // Set initial volume
             audio.volume = 0.2;
 
+            // Function to broadcast audio setting changes to other pages
+            function broadcastAudioSetting(enabled) {
+                localStorage.setItem('musicEnabled', enabled.toString());
+                // Dispatch custom event for same-page audio elements
+                window.dispatchEvent(new CustomEvent('audioSettingChanged', {
+                    detail: {
+                        enabled: enabled
+                    }
+                }));
+            }
+
+            // Check if current page is practice draft
+            const isPracticeDraftPage = window.location.pathname.includes('practice_draft.php');
+
             // Check localStorage for music setting
             const musicSetting = localStorage.getItem('musicEnabled');
-            if (musicSetting === 'false') {
+
+            // Always mute header audio on practice draft page
+            if (isPracticeDraftPage) {
                 audio.pause();
-                toggleMusicIcon.src = 'assets/mute.png'; // Set to mute icon
+                toggleMusicIcon.src = 'assets/mute.png';
             } else {
-                audio.play().catch(() => {}); // Handle potential play errors
-                toggleMusicIcon.src = 'assets/audio.png'; // Set to sound icon
+                // Normal behavior for other pages
+                if (musicSetting === 'false') {
+                    audio.pause();
+                    toggleMusicIcon.src = 'assets/mute.png'; // Set to mute icon
+                } else {
+                    audio.play().catch(() => {}); // Handle potential play errors
+                    toggleMusicIcon.src = 'assets/audio.png'; // Set to sound icon
+                }
             }
 
             // Toggle music on button click
             toggleMusicButton.addEventListener('click', function() {
+                // Disable toggle on practice draft page
+                if (isPracticeDraftPage) {
+                    return;
+                }
+
                 if (audio.paused) {
                     audio.play().catch(() => {}); // Handle potential play errors
                     toggleMusicIcon.src = 'assets/audio.png'; // Set to sound icon
-                    localStorage.setItem('musicEnabled', 'true');
+                    broadcastAudioSetting(true);
                 } else {
                     audio.pause();
                     toggleMusicIcon.src = 'assets/mute.png'; // Set to mute icon
-                    localStorage.setItem('musicEnabled', 'false');
+                    broadcastAudioSetting(false);
                 }
             });
 

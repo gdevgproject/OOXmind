@@ -87,6 +87,8 @@ try {
                 </div>
                 <div class="col-md-11">
                     <div class="d-flex justify-content-md-end align-items-center h-100">
+                        <button class="custom-big-btn" id="practiceAudioButton" onclick="togglePracticeAudio()"
+                            style="margin-right: 10px;">🔊</button>
                         <button class="custom-big-btn" id="theoryButton" onclick="toggleTheoryMode()">THEORY</button>
                     </div>
                 </div>
@@ -118,11 +120,52 @@ try {
     const audio = new Audio('assets/audio/ngamphaohoa.mp3');
     audio.loop = true;
     let isTheoryMode = false;
+    let isPracticeAudioEnabled = true;
 
-    // Bắt đầu phát audio nếu play là true
-    if (true) {
-        audio.play();
+    // Function to check and apply practice audio settings from localStorage
+    function applyPracticeAudioSettings() {
+        const practiceAudioSetting = localStorage.getItem('practiceAudioEnabled');
+        const practiceAudioButton = document.getElementById('practiceAudioButton');
+
+        if (practiceAudioSetting === 'false') {
+            audio.pause();
+            isPracticeAudioEnabled = false;
+            practiceAudioButton.textContent = '🔇';
+            practiceAudioButton.style.color = 'red';
+        } else {
+            // Only play if setting is enabled
+            if (isPracticeAudioEnabled) {
+                audio.play().catch(() => {}); // Handle potential play errors
+            }
+            isPracticeAudioEnabled = true;
+            practiceAudioButton.textContent = '🔊';
+            practiceAudioButton.style.color = 'green';
+        }
     }
+
+    // Function to toggle practice audio
+    function togglePracticeAudio() {
+        const practiceAudioButton = document.getElementById('practiceAudioButton');
+
+        if (isPracticeAudioEnabled) {
+            audio.pause();
+            isPracticeAudioEnabled = false;
+            practiceAudioButton.textContent = '🔇';
+            practiceAudioButton.style.color = 'red';
+            localStorage.setItem('practiceAudioEnabled', 'false');
+        } else {
+            audio.play().catch(() => {}); // Handle potential play errors
+            isPracticeAudioEnabled = true;
+            practiceAudioButton.textContent = '🔊';
+            practiceAudioButton.style.color = 'green';
+            localStorage.setItem('practiceAudioEnabled', 'true');
+        }
+    }
+
+    // Apply practice audio settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        applyPracticeAudioSettings();
+    });
 
     let pattern = ""; // Biến để lưu trữ theory
 
