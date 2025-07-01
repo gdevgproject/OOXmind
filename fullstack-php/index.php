@@ -67,27 +67,69 @@ function safeOutput($string)
 // Generate pagination HTML
 function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange = 2)
 {
-    $html = '';
+    if ($totalPages <= 1) {
+        return ''; // Don't show pagination if only one page
+    }
+
+    $html = '<div class="pagination-wrapper">';
 
     // Previous page link
+    $html .= '<div class="pagination-nav">';
     if ($page > 1) {
-        $html .= "<a href='?page=" . ($page - 1) . "&filter={$filter}'>«</a>";
+        $html .= "<a href='?page=" . ($page - 1) . "&filter={$filter}' class='nav-btn prev-btn' title='Previous Page'>‹</a>";
     } else {
-        $html .= "<a class='disabled'>«</a>";
+        $html .= "<span class='nav-btn prev-btn disabled' title='Previous Page'>‹</span>";
+    }
+    $html .= '</div>';
+
+    // Page numbers with smart range
+    $html .= '<div class="pagination-pages">';
+
+    // Always show first page
+    if ($page > $paginationRange + 2) {
+        $html .= "<a href='?page=1&filter={$filter}' class='page-btn'>1</a>";
+        if ($page > $paginationRange + 3) {
+            $html .= "<span class='page-ellipsis'>…</span>";
+        }
     }
 
-    // Page numbers
+    // Show range around current page
     for ($i = max(1, $page - $paginationRange); $i <= min($totalPages, $page + $paginationRange); $i++) {
         $activeClass = ($i == $page) ? 'active' : '';
-        $html .= "<a class='$activeClass' href='?page={$i}&filter={$filter}'>{$i}</a>";
+        $html .= "<a href='?page={$i}&filter={$filter}' class='page-btn {$activeClass}'>{$i}</a>";
     }
 
-    // Next page link
-    if ($page < $totalPages) {
-        $html .= "<a href='?page=" . ($page + 1) . "&filter={$filter}'>»</a>";
-    } else {
-        $html .= "<a class='disabled'>»</a>";
+    // Always show last page
+    if ($page < $totalPages - $paginationRange - 1) {
+        if ($page < $totalPages - $paginationRange - 2) {
+            $html .= "<span class='page-ellipsis'>…</span>";
+        }
+        $html .= "<a href='?page={$totalPages}&filter={$filter}' class='page-btn'>{$totalPages}</a>";
     }
+
+    $html .= '</div>';
+
+    // Page jump input
+    $html .= '<div class="pagination-jump">';
+    $html .= '<input type="number" id="pageJumpInput" class="page-jump-input" min="1" max="' . $totalPages . '" value="' . $page . '" title="Jump to page">';
+    $html .= '<button type="button" onclick="jumpToPage(\'' . $filter . '\', ' . $totalPages . ')" class="jump-btn" title="Go to page">Go</button>';
+    $html .= '</div>';
+
+    // Next page link
+    $html .= '<div class="pagination-nav">';
+    if ($page < $totalPages) {
+        $html .= "<a href='?page=" . ($page + 1) . "&filter={$filter}' class='nav-btn next-btn' title='Next Page'>›</a>";
+    } else {
+        $html .= "<span class='nav-btn next-btn disabled' title='Next Page'>›</span>";
+    }
+    $html .= '</div>';
+
+    // Page info
+    $html .= '<div class="pagination-info">';
+    $html .= '<span class="page-info">Page ' . $page . ' of ' . $totalPages . '</span>';
+    $html .= '</div>';
+
+    $html .= '</div>';
 
     return $html;
 }
@@ -261,34 +303,200 @@ $recentImages = getRecentImages(5);
         display: flex;
         justify-content: center;
         margin-top: 20px;
+        padding: 0;
     }
 
-    .pagination a {
-        color: var(--text-color);
-        padding: 8px 16px;
-        text-decoration: none;
-        border-radius: var(--border-radius);
-        border: 1px solid var(--primary-border);
-        background-color: var(--primary-bg);
-        margin: 0 4px;
-        transition: background-color var(--transition-speed);
-    }
-
-    .pagination a.active {
-        background-color: var(--btn-primary);
-        color: var(--text-color);
-        border: 1px solid var(--btn-primary);
-    }
-
-    .pagination a:hover:not(.active) {
-        background-color: rgba(235, 230, 255, 0.9);
-    }
-
-    .pagination-container {
+    .pagination-wrapper {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-top: 20px;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 8px 12px;
+        border-radius: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .pagination-nav {
+        display: flex;
+        align-items: center;
+    }
+
+    .pagination-pages {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-wrap: wrap;
+    }
+
+    .pagination-jump {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0 4px;
+    }
+
+    .pagination-info {
+        display: flex;
+        align-items: center;
+        margin-left: 8px;
+    }
+
+    .nav-btn,
+    .page-btn,
+    .jump-btn {
+        padding: 6px 10px;
+        text-decoration: none;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.2);
+        color: #333;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        min-width: 32px;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .page-btn {
+        min-width: 28px;
+        padding: 5px 8px;
+        font-size: 13px;
+    }
+
+    .nav-btn:hover:not(.disabled),
+    .page-btn:hover:not(.active),
+    .jump-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .page-btn.active {
+        background: var(--btn-primary);
+        color: #fff;
+        border-color: var(--btn-primary);
+        box-shadow: 0 0 10px rgba(163, 196, 243, 0.6);
+        font-weight: bold;
+    }
+
+    .nav-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .page-ellipsis {
+        padding: 5px 8px;
+        color: #666;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .page-jump-input {
+        width: 50px;
+        padding: 4px 6px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        font-size: 12px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .page-jump-input:focus {
+        outline: none;
+        border-color: var(--btn-primary);
+        box-shadow: 0 0 5px rgba(163, 196, 243, 0.5);
+    }
+
+    .jump-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        min-width: auto;
+        background: var(--btn-primary);
+        color: #fff;
+        border-color: var(--btn-primary);
+    }
+
+    .jump-btn:hover {
+        background: var(--btn-primary-hover);
+        border-color: var(--btn-primary-hover);
+    }
+
+    .page-info {
+        font-size: 11px;
+        color: #fff;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        white-space: nowrap;
+    }
+
+    /* Responsive pagination */
+    @media (max-width: 768px) {
+        .pagination-wrapper {
+            gap: 4px;
+            padding: 6px 8px;
+            flex-direction: column;
+        }
+
+        .pagination-pages {
+            order: 1;
+        }
+
+        .pagination-nav {
+            order: 2;
+        }
+
+        .pagination-jump {
+            order: 3;
+            margin: 2px 0;
+        }
+
+        .pagination-info {
+            order: 4;
+            margin: 2px 0;
+        }
+
+        .nav-btn,
+        .page-btn {
+            padding: 4px 6px;
+            font-size: 12px;
+            min-width: 24px;
+        }
+
+        .page-jump-input {
+            width: 40px;
+        }
+    }
+
+    /* Quick navigation tooltips */
+    .pagination-wrapper [title]:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-bottom: 5px;
+    }
+
+    .pagination-wrapper [title] {
+        position: relative;
     }
 
     /* Level badge styling */
@@ -499,13 +707,16 @@ $recentImages = getRecentImages(5);
         <a href="?filter=all<?= $page > 1 ? '&page=' . $page : '' ?>" class="filter-btn <?= $filter === 'all' ? 'active' : '' ?>">All Items</a>
         <a href="?filter=active<?= $page > 1 ? '&page=1' : '' ?>" class="filter-btn <?= $filter === 'active' ? 'active' : '' ?>">Active Only</a>
         <a href="?filter=inactive<?= $page > 1 ? '&page=1' : '' ?>" class="filter-btn <?= $filter === 'inactive' ? 'active' : '' ?>">Inactive Only</a>
+
+        <!-- Add New Button moved here -->
+        <button type="button" class="custom-btn" data-toggle="modal" data-target="#addNewModal" style="margin-left: auto;">
+            <img src="assets/add.png" alt="Add">
+        </button>
     </div>
 
     <div class="pagination-container">
-        <!-- Add New Button -->
-        <button type="button" class="custom-btn mb-3" data-toggle="modal" data-target="#addNewModal">
-            <img src="assets/add.png" alt="Add">
-        </button>
+        <!-- Empty div to balance spacing -->
+        <div></div>
 
         <!-- Pagination -->
         <div class="pagination" style="margin-bottom: 20px;">
@@ -1091,6 +1302,85 @@ $recentImages = getRecentImages(5);
     });
 
     window.onload = () => document.getElementById('searchInput').focus();
+
+    // Enhanced pagination functions
+    function jumpToPage(filter, maxPages) {
+        const input = document.getElementById('pageJumpInput');
+        const pageNum = parseInt(input.value);
+
+        if (pageNum >= 1 && pageNum <= maxPages) {
+            window.location.href = `?page=${pageNum}&filter=${filter}`;
+        } else {
+            // Visual feedback for invalid input
+            input.style.borderColor = '#ff4444';
+            input.style.background = 'rgba(255, 68, 68, 0.1)';
+
+            setTimeout(() => {
+                input.style.borderColor = '';
+                input.style.background = '';
+            }, 1000);
+
+            // Reset to current page
+            input.value = <?= $page ?>;
+        }
+    }
+
+    // Add keyboard support for page jumping
+    document.addEventListener('DOMContentLoaded', function() {
+        const pageJumpInput = document.getElementById('pageJumpInput');
+        if (pageJumpInput) {
+            pageJumpInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    jumpToPage(currentFilter, <?= $totalPages ?>);
+                }
+            });
+
+            // Auto-select text when focused
+            pageJumpInput.addEventListener('focus', function() {
+                this.select();
+            });
+
+            // Prevent invalid characters
+            pageJumpInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
+    });
+
+    // Add keyboard shortcuts for pagination
+    document.addEventListener('keydown', function(e) {
+        // Only handle if not in an input field
+        if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+            return;
+        }
+
+        const currentPage = <?= $page ?>;
+        const totalPages = <?= $totalPages ?>;
+        const filter = currentFilter;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+                if (currentPage > 1) {
+                    window.location.href = `?page=${currentPage - 1}&filter=${filter}`;
+                }
+                break;
+            case 'ArrowRight':
+                if (currentPage < totalPages) {
+                    window.location.href = `?page=${currentPage + 1}&filter=${filter}`;
+                }
+                break;
+            case 'Home':
+                if (currentPage !== 1) {
+                    window.location.href = `?page=1&filter=${filter}`;
+                }
+                break;
+            case 'End':
+                if (currentPage !== totalPages) {
+                    window.location.href = `?page=${totalPages}&filter=${filter}`;
+                }
+                break;
+        }
+    });
 </script>
 
 </body>
