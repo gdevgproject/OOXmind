@@ -3,6 +3,57 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 require_once 'model/pdo.php';
 
+// Function to get 5 most recent images
+function getRecentImages($limit = 5)
+{
+    $imageFolder = "view/uploads/image/";
+    if (!is_dir($imageFolder)) {
+        return [];
+    }
+
+    $images = [];
+    $files = scandir($imageFolder);
+
+    foreach ($files as $file) {
+        if ($file !== '.' && $file !== '..' && is_file($imageFolder . $file)) {
+            $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                $images[] = [
+                    'name' => $file,
+                    'path' => $imageFolder . $file,
+                    'time' => filemtime($imageFolder . $file)
+                ];
+            }
+        }
+    }
+
+    // Sort by modification time (newest first)
+    usort($images, function ($a, $b) {
+        return $b['time'] - $a['time'];
+    });
+
+    return array_slice($images, 0, $limit);
+}
+
+// Function to copy recent image with new timestamp naming
+function copyRecentImage($sourcePath, $timestamp)
+{
+    if (!file_exists($sourcePath)) {
+        return '';
+    }
+
+    $targetDir = "view/uploads/image/";
+    $extension = pathinfo($sourcePath, PATHINFO_EXTENSION);
+    $newFileName = $timestamp . "_image.$extension";
+    $targetFile = $targetDir . $newFileName;
+
+    if (copy($sourcePath, $targetFile)) {
+        return $targetFile;
+    }
+
+    return '';
+}
+
 if (isset($_POST['save'])) {
     // Lấy dữ liệu từ form
     $vocab = $_POST['newVocab'];
@@ -20,8 +71,17 @@ if (isset($_POST['save'])) {
     // Tạo tên file chung theo thời gian
     $timestamp = date('s_i_G_j_n_Y');
 
+    // Handle recent image selection
+    $imagePath = '';
+    if (!empty($_POST['selectedRecentImage'])) {
+        // Copy selected recent image with new naming
+        $imagePath = copyRecentImage($_POST['selectedRecentImage'], $timestamp);
+    } elseif (!empty($_FILES['newImage']['name'])) {
+        // Use uploaded image
+        $imagePath = saveFile('newImage', 'image', $timestamp);
+    }
+
     // Lưu file (nếu có)
-    $imagePath = !empty($_FILES['newImage']['name']) ? saveFile('newImage', 'image', $timestamp) : '';
     $videoPath = !empty($_FILES['newVideo']['name']) ? saveFile('newVideo', 'video', $timestamp) : '';
     $audioPath = !empty($_FILES['newAudio']['name']) ? saveFile('newAudio', 'audio', $timestamp) : '';
 

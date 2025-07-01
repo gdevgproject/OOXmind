@@ -1,5 +1,6 @@
 <?php
 include 'view/header.php';
+require_once 'process_add_content.php';
 
 function getContentData($pdo, $page, $recordsPerPage = 10, $filter = 'all')
 {
@@ -90,6 +91,9 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
 
     return $html;
 }
+
+// Get recent images for the modal
+$recentImages = getRecentImages(5);
 ?>
 
 <style>
@@ -376,6 +380,110 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
         background-color: rgba(255, 255, 255, 0.3);
         box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
     }
+
+    /* Recent Images Styles */
+    .recent-images-container {
+        margin-top: 10px;
+        border: 1px solid var(--primary-border);
+        border-radius: var(--border-radius);
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .recent-images-title {
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: var(--text-color);
+    }
+
+    .recent-images-grid {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+
+    .recent-image-item {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        border-radius: 6px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all var(--transition-speed);
+    }
+
+    .recent-image-item:hover {
+        border-color: var(--btn-primary);
+        transform: scale(1.05);
+    }
+
+    .recent-image-item.selected {
+        border-color: #4CAF50;
+        box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+    }
+
+    .recent-image-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .recent-image-item .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        opacity: 0;
+        transition: opacity var(--transition-speed);
+    }
+
+    .recent-image-item:hover .image-overlay {
+        opacity: 1;
+    }
+
+    .no-recent-images {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        font-size: 12px;
+        padding: 20px;
+    }
+
+    .clear-selection-btn {
+        background: var(--btn-danger);
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        cursor: pointer;
+        margin-top: 5px;
+        transition: background-color var(--transition-speed);
+    }
+
+    .clear-selection-btn:hover {
+        background: var(--btn-danger-hover);
+    }
+
+    .selected-image-info {
+        margin-top: 8px;
+        padding: 5px;
+        background: rgba(76, 175, 80, 0.2);
+        border-radius: 4px;
+        font-size: 11px;
+        display: none;
+    }
 </style>
 
 <div class="mx-auto list-vocab-table text-shadow-white" style="width:90%">
@@ -563,6 +671,31 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
                                     </label>
                                     <img id="imagePreview" class="preview-box" alt="Image Preview">
                                 </div>
+
+                                <!-- Recent Images Section -->
+                                <?php if (!empty($recentImages)): ?>
+                                    <div class="recent-images-container">
+                                        <div class="recent-images-title">📷 Recent Images (Click to Select)</div>
+                                        <div class="recent-images-grid">
+                                            <?php foreach ($recentImages as $index => $image): ?>
+                                                <div class="recent-image-item" onclick="selectRecentImage('<?= htmlspecialchars($image['path']) ?>', '<?= htmlspecialchars($image['name']) ?>', this)">
+                                                    <img src="<?= htmlspecialchars($image['path']) ?>" alt="Recent image">
+                                                    <div class="image-overlay">Select</div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="selected-image-info" id="selectedImageInfo">
+                                            <strong>Selected:</strong> <span id="selectedImageName"></span>
+                                            <button type="button" class="clear-selection-btn" onclick="clearRecentImageSelection()">Clear</button>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="recent-images-container">
+                                        <div class="no-recent-images">No recent images found</div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <input type="hidden" id="selectedRecentImage" name="selectedRecentImage" value="">
                             </div>
                             <div class="form-group">
                                 <label for="newVideo">Video</label>
@@ -708,6 +841,11 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
     function previewFile(input, previewId) {
         const file = input.files[0];
         if (file) {
+            // If user uploads a new file, clear recent image selection
+            if (input.id === 'newImage') {
+                clearRecentImageSelection();
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 const previewElement = document.getElementById(previewId);
@@ -888,6 +1026,69 @@ function getPaginationHtml($page, $totalPages, $filter = 'all', $paginationRange
     function redirectToPracticeDraft(def, vocab) {
         window.location.href = `practice_draft.php?def=${encodeURIComponent(def)}&vocab=${encodeURIComponent(vocab)}&returnFilter=${currentFilter}`;
     }
+
+    // Recent Image Selection Functions
+    function selectRecentImage(imagePath, imageName, element) {
+        // Clear previous selections
+        document.querySelectorAll('.recent-image-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+
+        // Select current item
+        element.classList.add('selected');
+
+        // Set hidden input value
+        document.getElementById('selectedRecentImage').value = imagePath;
+
+        // Show selection info
+        document.getElementById('selectedImageName').textContent = imageName;
+        document.getElementById('selectedImageInfo').style.display = 'block';
+
+        // Show preview
+        const previewImg = document.getElementById('imagePreview');
+        previewImg.src = imagePath;
+        previewImg.style.display = 'block';
+
+        // Clear file input to avoid conflicts
+        document.getElementById('newImage').value = '';
+    }
+
+    function clearRecentImageSelection() {
+        // Clear selection
+        document.querySelectorAll('.recent-image-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+
+        // Clear hidden input
+        document.getElementById('selectedRecentImage').value = '';
+
+        // Hide selection info
+        document.getElementById('selectedImageInfo').style.display = 'none';
+
+        // Clear preview
+        const previewImg = document.getElementById('imagePreview');
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+    }
+
+    // Clear selections when modal is closed
+    $('#addNewModal').on('hidden.bs.modal', function() {
+        clearRecentImageSelection();
+        // Clear all previews
+        ['imagePreview', 'videoPreview', 'audioPreview'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.src = '';
+                element.style.display = 'none';
+            }
+        });
+        // Clear form
+        document.querySelector('#addNewModal form').reset();
+        // Reset part of speech default value
+        document.getElementById('newPartOfSpeech').value = '()';
+        // Ensure active checkbox is checked by default
+        document.getElementById('newIsActive').checked = true;
+    });
 
     window.onload = () => document.getElementById('searchInput').focus();
 </script>
