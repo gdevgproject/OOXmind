@@ -1324,6 +1324,35 @@ $recentImages = getRecentImages(5);
         document.getElementById('newIsActive').checked = true;
     });
 
+    // Add keyboard shortcut for quick save in Add New modal
+    let addModalKeyboardHandler = null;
+
+    // Enable Ctrl+Enter shortcut when Add New modal opens
+    $('#addNewModal').on('shown.bs.modal', function() {
+        addModalKeyboardHandler = function(e) {
+            // Check if Ctrl+Enter is pressed
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                // Find and click the save button
+                const saveButton = document.querySelector('#addNewModal button[name="save"]');
+                if (saveButton) {
+                    saveButton.click();
+                }
+            }
+        };
+
+        // Add event listener
+        document.addEventListener('keydown', addModalKeyboardHandler);
+    });
+
+    // Disable Ctrl+Enter shortcut when Add New modal closes
+    $('#addNewModal').on('hidden.bs.modal', function() {
+        if (addModalKeyboardHandler) {
+            document.removeEventListener('keydown', addModalKeyboardHandler);
+            addModalKeyboardHandler = null;
+        }
+    });
+
     window.onload = () => document.getElementById('searchInput').focus();
 
     // Enhanced pagination functions
