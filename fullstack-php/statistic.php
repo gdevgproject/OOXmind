@@ -30,7 +30,7 @@ function getMonthlyActivity($conn)
 
 function getVocabByLevel($conn)
 {
-  $sql = "SELECT level, COUNT(*) as count FROM content GROUP BY level ORDER BY level ASC";
+  $sql = "SELECT level, COUNT(*) as count FROM content WHERE is_active = 1 GROUP BY level ORDER BY level ASC";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -39,9 +39,10 @@ function getVocabByLevel($conn)
 function getVocabVsQuestionDistribution($conn)
 {
   $sql = "SELECT
-            CASE WHEN vocab != '' AND vocab IS NOT NULL THEN 'Vocabulary' ELSE 'Question' END as content_type,
+            CASE WHEN vocab IS NOT NULL AND vocab != '' THEN 'Vocabulary' ELSE 'Question' END as content_type,
             COUNT(*) as count
           FROM content
+          WHERE is_active = 1
           GROUP BY content_type";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
@@ -51,11 +52,15 @@ function getVocabVsQuestionDistribution($conn)
 function getTopPerformingVocab($conn)
 {
   $sql = "SELECT vocab, def, question, level, correct_count, incorrect_count, 
-            (correct_count / (correct_count + incorrect_count)) * 100 as accuracy_rate
+            CASE 
+              WHEN (correct_count + incorrect_count) > 0 
+              THEN ROUND((correct_count / (correct_count + incorrect_count)) * 100, 2)
+              ELSE 0 
+            END as accuracy_rate
             FROM content 
-            WHERE (correct_count + incorrect_count) > 3
-            ORDER BY accuracy_rate DESC, level DESC
-            LIMIT 20"; // Increased limit to show more items
+            WHERE (correct_count + incorrect_count) >= 3 AND is_active = 1
+            ORDER BY accuracy_rate DESC, (correct_count + incorrect_count) DESC, level DESC
+            LIMIT 20";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -64,11 +69,15 @@ function getTopPerformingVocab($conn)
 function getLowestPerformingVocab($conn)
 {
   $sql = "SELECT vocab, def, question, level, correct_count, incorrect_count, 
-            (correct_count / (correct_count + incorrect_count)) * 100 as accuracy_rate
+            CASE 
+              WHEN (correct_count + incorrect_count) > 0 
+              THEN ROUND((correct_count / (correct_count + incorrect_count)) * 100, 2)
+              ELSE 0 
+            END as accuracy_rate
             FROM content 
-            WHERE (correct_count + incorrect_count) > 3
-            ORDER BY accuracy_rate ASC, level DESC
-            LIMIT 20"; // Increased limit to show more items
+            WHERE (correct_count + incorrect_count) >= 3 AND is_active = 1
+            ORDER BY accuracy_rate ASC, (correct_count + incorrect_count) DESC, level DESC
+            LIMIT 20";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -80,13 +89,22 @@ function getReviewScheduleDistribution($conn)
                 CASE
                     WHEN next_review IS NULL THEN 'Not Scheduled'
                     WHEN next_review <= NOW() THEN 'Overdue'
-                    WHEN next_review <= DATE_ADD(NOW(), INTERVAL 1 DAY) THEN 'Today'
+                    WHEN DATE(next_review) = CURDATE() THEN 'Today'
                     WHEN next_review <= DATE_ADD(NOW(), INTERVAL 7 DAY) THEN 'This Week'
                     ELSE 'Later'
                 END as schedule_status,
                 COUNT(*) as count
             FROM content
-            GROUP BY schedule_status";
+            WHERE is_active = 1
+            GROUP BY schedule_status
+            ORDER BY 
+              CASE schedule_status
+                WHEN 'Overdue' THEN 1
+                WHEN 'Today' THEN 2
+                WHEN 'This Week' THEN 3
+                WHEN 'Later' THEN 4
+                WHEN 'Not Scheduled' THEN 5
+              END";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -97,8 +115,9 @@ function getStudyTimeDistribution($conn)
   $sql = "SELECT
                 HOUR(open_time) as hour_of_day,
                 COUNT(*) as session_count,
-                AVG(total_time_spent) as avg_time_spent
+                ROUND(AVG(total_time_spent), 2) as avg_time_spent
             FROM activity_log
+            WHERE open_time IS NOT NULL
             GROUP BY HOUR(open_time)
             ORDER BY hour_of_day";
   $stmt = $conn->prepare($sql);
@@ -111,8 +130,9 @@ function getProgressOverTime($conn)
   $sql = "SELECT
                 DATE_FORMAT(create_time, '%Y-%m') as month,
                 COUNT(*) as new_vocab_count,
-                AVG(level) as avg_level
+                ROUND(AVG(level), 2) as avg_level
             FROM content
+            WHERE is_active = 1
             GROUP BY DATE_FORMAT(create_time, '%Y-%m')
             ORDER BY month";
   $stmt = $conn->prepare($sql);
@@ -122,159 +142,111 @@ function getProgressOverTime($conn)
 
 function getLearningStreak($conn)
 {
-  // This improved streak function checks any activity day (content creation, review, etc.)
-  // Using a simpler approach to avoid complex SQL syntax issues
   try {
-    // First get all activity dates (both from activity logs and content creation)
-    $sql = "SELECT activity_date as date FROM activity_log
+    // Get all unique activity dates, properly ordered
+    $sql = "SELECT DISTINCT DATE(activity_date) as date 
+            FROM activity_log 
+            WHERE activity_date IS NOT NULL
             UNION
-            SELECT DATE(create_time) as date FROM content
-            ORDER BY date";
+            SELECT DISTINCT DATE(create_time) as date 
+            FROM content 
+            WHERE create_time IS NOT NULL
+            ORDER BY date DESC";
+
     $stmt = $conn->prepare($sql);
     $stmt->execute();
-    $allDates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    if (empty($allDates)) {
+    if (empty($dates)) {
       return 0;
     }
 
-    // Calculate longest streak manually
     $maxStreak = 1;
     $currentStreak = 1;
 
-    for ($i = 1; $i < count($allDates); $i++) {
-      $prevDate = strtotime($allDates[$i - 1]);
-      $currDate = strtotime($allDates[$i]);
+    // Convert to timestamps for easier calculation
+    $dateTimestamps = array_map('strtotime', $dates);
 
-      // Check if dates are consecutive
-      if (($currDate - $prevDate) == 86400) { // 86400 seconds = 1 day
+    for ($i = 0; $i < count($dateTimestamps) - 1; $i++) {
+      $dayDiff = ($dateTimestamps[$i] - $dateTimestamps[$i + 1]) / 86400;
+
+      if ($dayDiff == 1) {
+        // Consecutive days
         $currentStreak++;
-      }
-      // If more than 1 day gap, reset streak
-      else if (($currDate - $prevDate) > 86400) {
+      } else {
+        // Gap found, update max and reset current
         $maxStreak = max($maxStreak, $currentStreak);
         $currentStreak = 1;
       }
     }
 
-    // Final check to capture the last streak
+    // Final check
     $maxStreak = max($maxStreak, $currentStreak);
     return $maxStreak;
   } catch (Exception $e) {
-    // Fallback if error occurs
+    error_log("Error in getLearningStreak: " . $e->getMessage());
     return 0;
   }
 }
 
 function getCurrentStreak($conn)
 {
-  // Get the current streak (consecutive days of activity up to today)
   try {
-    // First get all activity dates (both from activity logs and content creation)
-    $sql = "SELECT activity_date as date FROM activity_log
+    // Get recent activity dates in descending order
+    $sql = "SELECT DISTINCT DATE(activity_date) as date 
+            FROM activity_log 
+            WHERE activity_date IS NOT NULL
             UNION
-            SELECT DATE(create_time) as date FROM content
-            ORDER BY date DESC";
+            SELECT DISTINCT DATE(create_time) as date 
+            FROM content 
+            WHERE create_time IS NOT NULL
+            ORDER BY date DESC
+            LIMIT 30"; // Only check last 30 days for performance
+
     $stmt = $conn->prepare($sql);
     $stmt->execute();
-    $allDates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    if (empty($allDates)) {
+    if (empty($dates)) {
       return 0;
     }
 
-    // Check if there's activity today
     $today = date('Y-m-d');
-    $mostRecentDate = $allDates[0];
+    $yesterday = date('Y-m-d', strtotime('-1 day'));
 
-    // If no activity today, streak is 0
-    if ($mostRecentDate != $today) {
-      // Check if there was activity yesterday - if so streak is at least 1
-      $yesterday = date('Y-m-d', strtotime('-1 day'));
-      if ($mostRecentDate == $yesterday) {
-        $startIndex = 0;
-      } else {
-        return 0; // No activity today or yesterday, streak is 0
-      }
-    } else {
-      $startIndex = 0; // Start from today
-    }
-
-    // Calculate current streak - count consecutive days
-    $currentStreak = 1;
-    for ($i = $startIndex; $i < count($allDates) - 1; $i++) {
-      $currDate = strtotime($allDates[$i]);
-      $nextDate = strtotime($allDates[$i + 1]);
-
-      // Check if dates are consecutive
-      if (($currDate - $nextDate) == 86400) { // 86400 seconds = 1 day
-        $currentStreak++;
-      } else {
-        break; // Break on first non-consecutive day
-      }
-    }
-
-    return $currentStreak;
-  } catch (Exception $e) {
-    return getSimpleCurrentStreak($conn);
-  }
-}
-
-function getSimpleCurrentStreak($conn)
-{
-  // Even simpler approach for current streak calculation
-  try {
-    // Check if there's activity today
-    $sql = "SELECT COUNT(*) as has_activity FROM (
-              SELECT activity_date as date FROM activity_log WHERE activity_date = CURDATE()
-              UNION
-              SELECT DATE(create_time) as date FROM content WHERE DATE(create_time) = CURDATE()
-            ) as today_check";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute();
-    $todayResult = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // If no activity today, return 0
-    if ($todayResult['has_activity'] == 0) {
+    // Check if there's activity today or yesterday to start streak
+    if ($dates[0] != $today && $dates[0] != $yesterday) {
       return 0;
     }
 
-    // Check for consecutive days before today
-    $streak = 1; // Start with 1 for today
-    $dayOffset = 1;
+    $streak = 1;
+    $expectedDate = $dates[0];
 
-    while ($dayOffset <= 30) { // Check up to 30 days back
-      $sql = "SELECT COUNT(*) as has_activity FROM (
-                SELECT activity_date as date FROM activity_log
-                WHERE activity_date = DATE_SUB(CURDATE(), INTERVAL {$dayOffset} DAY)
-                UNION
-                SELECT DATE(create_time) as date FROM content
-                WHERE DATE(create_time) = DATE_SUB(CURDATE(), INTERVAL {$dayOffset} DAY)
-              ) as day_check";
-      $stmt = $conn->prepare($sql);
-      $stmt->execute();
-      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    for ($i = 1; $i < count($dates); $i++) {
+      $previousDay = date('Y-m-d', strtotime($expectedDate . ' -1 day'));
 
-      if ($result['has_activity'] > 0) {
+      if ($dates[$i] == $previousDay) {
         $streak++;
-        $dayOffset++;
+        $expectedDate = $dates[$i];
       } else {
-        break; // Break on first day without activity
+        break; // Non-consecutive day found
       }
     }
 
     return $streak;
   } catch (Exception $e) {
-    // Absolute minimum fallback
+    error_log("Error in getCurrentStreak: " . $e->getMessage());
     return 0;
   }
 }
+
+// Remove the complex getSimpleCurrentStreak function as it's redundant
 
 function getContentTypePerformance($conn)
 {
   $sql = "SELECT
             CASE
-              WHEN vocab != '' AND vocab IS NOT NULL THEN 'Vocabulary'
+              WHEN vocab IS NOT NULL AND vocab != '' THEN 'Vocabulary'
               ELSE 'Question'
             END as content_type,
             SUM(correct_count) as total_correct,
@@ -282,10 +254,11 @@ function getContentTypePerformance($conn)
             SUM(correct_count + incorrect_count) as total_attempts,
             CASE
               WHEN SUM(correct_count + incorrect_count) > 0
-              THEN (SUM(correct_count) / SUM(correct_count + incorrect_count)) * 100
+              THEN ROUND((SUM(correct_count) / SUM(correct_count + incorrect_count)) * 100, 2)
               ELSE 0
             END as accuracy_rate
           FROM content
+          WHERE is_active = 1
           GROUP BY content_type";
   $stmt = $conn->prepare($sql);
   $stmt->execute();
@@ -295,17 +268,20 @@ function getContentTypePerformance($conn)
 function getReviewEfficiency($conn)
 {
   $sql = "SELECT
-                content_id, vocab,
+                content_id, 
+                COALESCE(vocab, SUBSTRING(question, 1, 50)) as display_content,
                 correct_count,
                 incorrect_count,
                 (correct_count + incorrect_count) as total_attempts,
-                (correct_count / (correct_count + incorrect_count)) * 100 as success_rate
-            FROM
-                content
-            WHERE
-                (correct_count + incorrect_count) > 0
-            ORDER BY
-                success_rate DESC";
+                CASE 
+                  WHEN (correct_count + incorrect_count) > 0 
+                  THEN ROUND((correct_count / (correct_count + incorrect_count)) * 100, 2)
+                  ELSE 0 
+                END as success_rate
+            FROM content
+            WHERE (correct_count + incorrect_count) > 0 AND is_active = 1
+            ORDER BY success_rate DESC, total_attempts DESC
+            LIMIT 100"; // Limit for performance
   $stmt = $conn->prepare($sql);
   $stmt->execute();
   return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -313,85 +289,92 @@ function getReviewEfficiency($conn)
 
 function calculateOverallStats($conn)
 {
-  // Daily average reviews
-  $sqlDailyAvg = "SELECT AVG(vocab_reviewed_count) as avg_daily_reviews FROM activity_log";
-  $stmtDailyAvg = $conn->prepare($sqlDailyAvg);
-  $stmtDailyAvg->execute();
-  $dailyAvg = $stmtDailyAvg->fetch(PDO::FETCH_ASSOC)['avg_daily_reviews'];
+  try {
+    // Use single query for better performance
+    $sql = "SELECT 
+              COALESCE(AVG(vocab_reviewed_count), 0) as avg_daily_reviews,
+              COALESCE(AVG(total_time_spent), 0) as avg_session_time,
+              COUNT(DISTINCT activity_date) as total_days
+            FROM activity_log
+            WHERE activity_date IS NOT NULL";
 
-  // Average time per session
-  $sqlTimeAvg = "SELECT AVG(total_time_spent) as avg_session_time FROM activity_log";
-  $stmtTimeAvg = $conn->prepare($sqlTimeAvg);
-  $stmtTimeAvg->execute();
-  $timeAvg = $stmtTimeAvg->fetch(PDO::FETCH_ASSOC)['avg_session_time'];
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $activityStats = $stmt->fetch(PDO::FETCH_ASSOC);
 
-  // Total unique study days
-  $sqlTotalDays = "SELECT COUNT(DISTINCT activity_date) as total_days FROM activity_log";
-  $stmtTotalDays = $conn->prepare($sqlTotalDays);
-  $stmtTotalDays->execute();
-  $totalDays = $stmtTotalDays->fetch(PDO::FETCH_ASSOC)['total_days'];
+    // Content statistics
+    $sql = "SELECT 
+              COUNT(*) as total_items,
+              SUM(correct_count) as total_correct,
+              SUM(incorrect_count) as total_incorrect,
+              COUNT(DISTINCT DATE(create_time)) as creation_days
+            FROM content 
+            WHERE is_active = 1";
 
-  // Total content items
-  $sqlTotalItems = "SELECT COUNT(*) as total_items FROM content";
-  $stmtTotalItems = $conn->prepare($sqlTotalItems);
-  $stmtTotalItems->execute();
-  $totalItems = $stmtTotalItems->fetch(PDO::FETCH_ASSOC)['total_items'];
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $contentStats = $stmt->fetch(PDO::FETCH_ASSOC);
 
-  // Content created per day
-  $sqlCreatedPerDay = "SELECT COUNT(*)/COUNT(DISTINCT DATE(create_time)) as created_per_day FROM content";
-  $stmtCreatedPerDay = $conn->prepare($sqlCreatedPerDay);
-  $stmtCreatedPerDay->execute();
-  $createdPerDay = $stmtCreatedPerDay->fetch(PDO::FETCH_ASSOC)['created_per_day'];
+    // Calculate derived statistics
+    $totalAttempts = $contentStats['total_correct'] + $contentStats['total_incorrect'];
+    $successRate = $totalAttempts > 0 ? ($contentStats['total_correct'] / $totalAttempts) * 100 : 0;
+    $createdPerDay = $contentStats['creation_days'] > 0 ? $contentStats['total_items'] / $contentStats['creation_days'] : 0;
 
-  // Success rate
-  $sqlSuccessRate = "SELECT
-                        SUM(correct_count) as total_correct,
-                        SUM(incorrect_count) as total_incorrect
-                      FROM content";
-  $stmtSuccessRate = $conn->prepare($sqlSuccessRate);
-  $stmtSuccessRate->execute();
-  $successData = $stmtSuccessRate->fetch(PDO::FETCH_ASSOC);
-  $totalAttempts = $successData['total_correct'] + $successData['total_incorrect'];
-  $successRate = $totalAttempts > 0 ? ($successData['total_correct'] / $totalAttempts) * 100 : 0;
+    return [
+      'avg_daily_reviews' => round($activityStats['avg_daily_reviews'], 1),
+      'avg_session_time' => round($activityStats['avg_session_time'] / 60, 1), // Convert to minutes
+      'total_study_days' => (int)$activityStats['total_days'],
+      'success_rate' => round($successRate, 1),
+      'total_items' => (int)$contentStats['total_items'],
+      'created_per_day' => round($createdPerDay, 1)
+    ];
+  } catch (Exception $e) {
+    error_log("Error in calculateOverallStats: " . $e->getMessage());
+    return [
+      'avg_daily_reviews' => 0,
+      'avg_session_time' => 0,
+      'total_study_days' => 0,
+      'success_rate' => 0,
+      'total_items' => 0,
+      'created_per_day' => 0
+    ];
+  }
+}
 
-  return [
-    'avg_daily_reviews' => round($dailyAvg, 1),
-    'avg_session_time' => round($timeAvg / 60, 1), // Convert to minutes
-    'total_study_days' => $totalDays,
-    'success_rate' => round($successRate, 1),
-    'total_items' => $totalItems,
-    'created_per_day' => round($createdPerDay, 1)
+// Fetch all required data with error handling
+try {
+  $conn = pdo_get_connection();
+  $weeklyActivity = getLastWeekActivity($conn);
+  $monthlyActivity = getMonthlyActivity($conn);
+  $vocabByLevel = getVocabByLevel($conn);
+  $contentTypeData = getVocabVsQuestionDistribution($conn);
+  $contentTypePerf = getContentTypePerformance($conn);
+  $topVocabs = getTopPerformingVocab($conn);
+  $lowestVocabs = getLowestPerformingVocab($conn);
+  $reviewSchedule = getReviewScheduleDistribution($conn);
+  $studyTime = getStudyTimeDistribution($conn);
+  $progressData = getProgressOverTime($conn);
+
+  $maxStreak = getLearningStreak($conn);
+  $currentStreak = getCurrentStreak($conn);
+  $overall = calculateOverallStats($conn);
+  $reviewEfficiency = getReviewEfficiency($conn);
+} catch (Exception $e) {
+  error_log("Database error in statistics: " . $e->getMessage());
+  // Set default values for safety
+  $weeklyActivity = $monthlyActivity = $vocabByLevel = $contentTypeData = [];
+  $contentTypePerf = $topVocabs = $lowestVocabs = $reviewSchedule = [];
+  $studyTime = $progressData = $reviewEfficiency = [];
+  $maxStreak = $currentStreak = 0;
+  $overall = [
+    'avg_daily_reviews' => 0,
+    'avg_session_time' => 0,
+    'total_study_days' => 0,
+    'success_rate' => 0,
+    'total_items' => 0,
+    'created_per_day' => 0
   ];
 }
-
-// Fetch all required data
-$conn = pdo_get_connection();
-$weeklyActivity = getLastWeekActivity($conn);
-$monthlyActivity = getMonthlyActivity($conn);
-$vocabByLevel = getVocabByLevel($conn);
-$contentTypeData = getVocabVsQuestionDistribution($conn);
-$contentTypePerf = getContentTypePerformance($conn);
-$topVocabs = getTopPerformingVocab($conn);
-$lowestVocabs = getLowestPerformingVocab($conn);
-$reviewSchedule = getReviewScheduleDistribution($conn);
-$studyTime = getStudyTimeDistribution($conn);
-$progressData = getProgressOverTime($conn);
-
-// Use try-catch to handle potential errors in the streak calculations
-try {
-  $maxStreak = getLearningStreak($conn);
-} catch (Exception $e) {
-  $maxStreak = 0;
-}
-
-try {
-  $currentStreak = getCurrentStreak($conn);
-} catch (Exception $e) {
-  $currentStreak = 0;
-}
-
-$overall = calculateOverallStats($conn);
-$reviewEfficiency = getReviewEfficiency($conn);
 
 // Prepare data for charts
 $weeklyDates = [];
@@ -453,8 +436,8 @@ $totalReviewed = 0;
 $totalCorrect = 0;
 
 foreach ($reviewEfficiency as $item) {
-  $totalReviewed += $item['total_attempts'];
-  $totalCorrect += $item['correct_count'];
+  $totalReviewed += (int)$item['total_attempts'];
+  $totalCorrect += (int)$item['correct_count'];
 }
 
 $overallEfficiency = $totalReviewed > 0 ? ($totalCorrect / $totalReviewed) * 100 : 0;
