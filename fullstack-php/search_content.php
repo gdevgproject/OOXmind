@@ -170,6 +170,16 @@ function echoRow($row, &$count, $filter)
     $rowClass = $isActive ? 'active-vocab' : 'inactive-vocab';
     $level = (int)$row['level'];
 
+    // Safely prepare data for JavaScript - handle empty values
+    $contentId = (string)$row['content_id'];
+    $vocab = $row['vocab'] ?? '';
+    $question = $row['question'] ?? '';
+
+    // Create safe JSON strings for JavaScript
+    $vocabJson = json_encode($vocab, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+    $questionJson = json_encode($question, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+    $contentIdJson = json_encode($contentId, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+
     echo "<tr class='$rowClass'>";
     echo "<td>
         <button class='custom-btn text-center' data-def='" . htmlspecialchars($row['def']) . "' data-vocab='" . htmlspecialchars($row['vocab']) . "' data-filter='" . htmlspecialchars($filter) . "'>
@@ -190,7 +200,13 @@ function echoRow($row, &$count, $filter)
             {$isActive},
             {$level}
             )' class='custom-btn text-center'><img src='assets/edit.png' alt='Edit'></button>
-        <button class='custom-btn text-center' onclick='deleteContent({$row['content_id']})'><img src='assets/bin.png' alt='Delete'></button>
+        <button class='custom-btn text-center'
+            onmousedown='startDeleteHold({$contentIdJson}, {$vocabJson}, {$questionJson})'
+            onmouseup='endDeleteHold()'
+            onmouseleave='endDeleteHold()'
+            onclick='confirmDelete({$contentIdJson}, {$vocabJson}, {$questionJson})'>
+            <img src='assets/bin.png' alt='Delete'>
+        </button>
     </td>";
 
     echo "<td>{$count}</td>";

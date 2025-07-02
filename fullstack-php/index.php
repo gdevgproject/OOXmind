@@ -768,10 +768,10 @@ $recentImages = getRecentImages(5);
                             <img src="assets/edit.png" alt="Edit">
                         </button>
                         <button class="custom-btn"
-                            onmousedown='startDeleteHold(<?= json_encode($rowId) ?>)'
+                            onmousedown='startDeleteHold(<?= json_encode($rowId) ?>, <?= json_encode($vocab) ?>, <?= json_encode($question) ?>)'
                             onmouseup='endDeleteHold()'
                             onmouseleave='endDeleteHold()'
-                            onclick='confirmDelete(<?= json_encode($rowId) ?>)'>
+                            onclick='confirmDelete(<?= json_encode($rowId) ?>, <?= json_encode($vocab) ?>, <?= json_encode($question) ?>)'>
                             <img src="assets/bin.png" alt="Delete">
                         </button>
                     </td>
@@ -1070,24 +1070,47 @@ $recentImages = getRecentImages(5);
     }
 
     let deleteHoldTimeout;
+    let deleteContentInfo = {};
 
-    function startDeleteHold(contentId) {
+    function startDeleteHold(contentId, vocab, question) {
+        deleteContentInfo = {
+            contentId,
+            vocab,
+            question
+        };
         deleteHoldTimeout = setTimeout(() => {
-            deleteContent(contentId, true);
+            deleteContent(contentId, vocab, question, true);
         }, 650);
     }
 
     function endDeleteHold() {
         clearTimeout(deleteHoldTimeout);
+        deleteContentInfo = {};
     }
 
-    function confirmDelete(contentId) {
-        if (confirm("Are you sure you want to delete this content?")) {
-            deleteContent(contentId);
+    function confirmDelete(contentId, vocab, question) {
+        const displayText = getContentDisplayText(vocab, question);
+        const confirmMessage = `Are you sure you want to delete this content?\n\nID: ${contentId}\nContent: ${displayText}`;
+
+        if (confirm(confirmMessage)) {
+            deleteContent(contentId, vocab, question);
         }
     }
 
-    function deleteContent(contentId, isForced = false) {
+    function getContentDisplayText(vocab, question) {
+        // If vocabulary exists and is not empty, use it
+        if (vocab && vocab.trim() !== '' && vocab.trim() !== '()') {
+            return vocab.length > 50 ? vocab.substring(0, 50) + '...' : vocab;
+        }
+        // Otherwise, use first part of question
+        else if (question && question.trim() !== '') {
+            return question.length > 50 ? question.substring(0, 50) + '...' : question;
+        }
+        // Fallback
+        return 'Unknown content';
+    }
+
+    function deleteContent(contentId, vocab = '', question = '', isForced = false) {
         if (!isForced) {
             // Add filter parameter to redirect URL
             window.location.href = `delete_content.php?id=${contentId}&returnFilter=${currentFilter}`;
