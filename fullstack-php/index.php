@@ -1343,6 +1343,9 @@ $recentImages = getRecentImages(5);
 
         // Add event listener
         document.addEventListener('keydown', addModalKeyboardHandler);
+
+        // Add paste functionality for images
+        document.addEventListener('paste', handleImagePaste);
     });
 
     // Disable Ctrl+Enter shortcut when Add New modal closes
@@ -1350,6 +1353,135 @@ $recentImages = getRecentImages(5);
         if (addModalKeyboardHandler) {
             document.removeEventListener('keydown', addModalKeyboardHandler);
             addModalKeyboardHandler = null;
+        }
+        // Remove paste event listener
+        document.removeEventListener('paste', handleImagePaste);
+    });
+
+    // Handle image paste functionality
+    function handleImagePaste(e) {
+        // Only handle paste if Add New modal is open
+        if (!$('#addNewModal').hasClass('show')) {
+            return;
+        }
+
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const items = clipboardData.items;
+        if (!items) return;
+
+        // Look for image in clipboard
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+
+            // Check if item is an image
+            if (item.type.indexOf('image') !== -1) {
+                e.preventDefault();
+
+                const file = item.getAsFile();
+                if (file) {
+                    // Clear recent image selection since we're pasting a new image
+                    clearRecentImageSelection();
+
+                    // Create a custom file input event to trigger existing preview logic
+                    const fileInput = document.getElementById('newImage');
+
+                    // Create a new FileList-like object
+                    const dataTransfer = new DataTransfer();
+
+                    // Generate a filename with timestamp
+                    const timestamp = new Date().getTime();
+                    const extension = file.type.split('/')[1] || 'png';
+                    const fileName = `pasted_image_${timestamp}.${extension}`;
+
+                    // Create a new File object with custom name
+                    const renamedFile = new File([file], fileName, {
+                        type: file.type,
+                        lastModified: file.lastModified
+                    });
+
+                    dataTransfer.items.add(renamedFile);
+                    fileInput.files = dataTransfer.files;
+
+                    // Trigger preview
+                    previewFile(fileInput, 'imagePreview');
+
+                    // Show visual feedback
+                    showPasteSuccess();
+                }
+                break;
+            }
+        }
+    }
+
+    // Show visual feedback for successful paste
+    function showPasteSuccess() {
+        const previewContainer = document.querySelector('#addNewModal .upload-preview');
+        if (previewContainer) {
+            // Add temporary success indicator
+            previewContainer.style.borderColor = '#4CAF50';
+            previewContainer.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.6)';
+
+            // Create success message
+            const successMsg = document.createElement('div');
+            successMsg.textContent = 'Image pasted successfully!';
+            successMsg.style.cssText = `
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: #4CAF50;
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 11px;
+                z-index: 10;
+                animation: fadeInOut 2s ease-in-out;
+            `;
+
+            // Add CSS animation if not exists
+            if (!document.getElementById('pasteSuccessStyle')) {
+                const style = document.createElement('style');
+                style.id = 'pasteSuccessStyle';
+                style.textContent = `
+                    @keyframes fadeInOut {
+                        0% { opacity: 0; transform: translateY(-10px); }
+                        20% { opacity: 1; transform: translateY(0); }
+                        80% { opacity: 1; transform: translateY(0); }
+                        100% { opacity: 0; transform: translateY(-10px); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            previewContainer.appendChild(successMsg);
+
+            // Reset styles after animation
+            setTimeout(() => {
+                previewContainer.style.borderColor = '';
+                previewContainer.style.boxShadow = '';
+                if (successMsg.parentNode) {
+                    successMsg.remove();
+                }
+            }, 2000);
+        }
+    }
+
+    // Add visual hint for paste functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add paste hint to the image upload section
+        const imageUploadSection = document.querySelector('#addNewModal .form-group label[for="newImage"]');
+        if (imageUploadSection) {
+            const pasteHint = document.createElement('small');
+            pasteHint.style.cssText = `
+                display: block;
+                color: #666;
+                font-style: italic;
+                margin-top: 4px;
+                font-size: 11px;
+            `;
+            pasteHint.textContent = '💡 Tip: You can also paste images directly (Ctrl+V)';
+            imageUploadSection.parentNode.insertBefore(pasteHint, imageUploadSection.nextSibling);
         }
     });
 
